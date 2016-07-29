@@ -1,6 +1,6 @@
 module Main where
 
-import Hnefatafl
+import ConsoleRunner
 
 --main :: IO GameState
 main = runGameLoop

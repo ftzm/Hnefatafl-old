@@ -1,0 +1,47 @@
+
+-----------todo
+--accept options at startup regarding who is ai and who not.
+
+--separate files into different modules
+
+--convert ratio to score when printing board
+--consider passing sqaures all the way through to movePiece instead of making it look them up again
+--loss if can't make a move
+--consider
+
+--better appearance of board
+--       A   B   C   D   E   F   G   H   I   J   K
+--     +---+---+---+---+---+---+---+---+---+---+---+
+--  1  |   |   |   | X | X | X | X | X |   |   |   |
+--     +---+---+---+---+---+---+---+---+---+---+---+
+--  2  |   |   |   | O |   | X |   |   |   |   |   |
+--     +---+---+---+---+---+---+---+---+---+---+---+
+--  3  |   |   |   |   |   |   |   |   |   |   |   |
+--     +---+---+---+---+---+---+---+---+---+---+---+
+--  4  |   |   |   |   |   |   |   |   |   |   |   |
+--     +---+---+---+---+---+---+---+---+---+---+---+
+--  5  |   |   |   |   |   |OOO|   |   |   |   |   |
+--     +---+---+---+---+---+---+---+---+---+---+---+
+--  6  |   |   |   |   |   |   |   |   |   |   |   |
+--     +---+---+---+---+---+---+---+---+---+---+---+
+--  7  |   |   |   |   |   |   |   |   |   |   |   |
+--     +---+---+---+---+---+---+---+---+---+---+---+
+--  8  |   |   |   |   |   |   |   |   |   |   |   |
+--     +---+---+---+---+---+---+---+---+---+---+---+
+--  9  |   |   |   |   |   |   |   |   |   |   |   |
+--     +---+---+---+---+---+---+---+---+---+---+---+
+-- 10  |   |   |   |   |   | X |   |   |   |   |   |
+--     +---+---+---+---+---+---+---+---+---+---+---+
+-- 11  |   |   |   | X | X | X | X | X |   |   |   |
+--     +---+---+---+---+---+---+---+---+---+---+---+
+
+--pause before ai move
+
+-- mechanism for randomly choosing an ai strategy
+-- pass in difficulty to ai
+
+--implement loss when black has no more pieces
+
+--find better way to handle if there is no board or ratio chance on piece move than
+--resetting the same board and ratio on gamestate
+
