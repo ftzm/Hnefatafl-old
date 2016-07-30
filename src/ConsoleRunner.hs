@@ -2,8 +2,10 @@ module ConsoleRunner where
 
 import Engine
 import PrintBoard
-import Control.Concurrent
+import BasicAI
 
+
+import Control.Concurrent
 import Control.Monad.Trans.Maybe
 import Data.Maybe
 
@@ -23,8 +25,6 @@ selectMove g = do
         Nothing -> selectMove g
         Just move -> return $ movePiece g (piece,move)
 
-generateMove :: GameState -> GameState
-generateMove g = bestMove 1 g
 
 gameLoop :: IO GameState -> IO GameState
 gameLoop g' = do

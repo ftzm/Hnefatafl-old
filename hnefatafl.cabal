@@ -19,6 +19,7 @@ library
   other-modules:       PrintBoard
                      , BoardData
                      , Engine
+                     , BasicAI
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , transformers

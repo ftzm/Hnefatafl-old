@@ -1,21 +1,21 @@
 {-# LANGUAGE TupleSections #-}
 module Engine
-  ( GameState(board,frontTurn,ratio,whiteIsHuman,blackIsHuman)
-  , whiteCoords
-  , blackCoords
-  , movePiece
-  , bestMove
-  , getSquare
-  , pieceMoves
-  , startGame
+  ( GameState(board,frontTurn,ratio,whiteIsHuman,blackIsHuman) --should be exported
+  , whiteCoords --iffy
+  , blackCoords --iffy
+  , movePiece --should be exported
+  , getSquare --should be exported
+  , pieceMoves --should be exported
+  , startGame --should be exported
+  , intToCoord --for ai
+  , whitePiece --for ai
+  , blackPiece --for ai
   ) where
 
 import qualified Data.IntMap.Strict as IM
 import Data.Maybe
 import Data.List
-import Data.Ord
 import Control.Applicative
-import Control.Arrow
 
 import BoardData
 
@@ -167,22 +167,6 @@ movePiece g (c1,c2) = g {board = newB, ratio = newR, frontTurn = not ft}
     (newB, newR) = moveEffect (c2,v1) (putPiece c2 v1 $ putPiece c1 v2 b) r
     (_,v1) = fromJust $ getSquare c1 b
     (_,v2) = fromJust $ getSquare c2 b
-
-allMoves :: GameState -> [GameState]
-allMoves g = map (movePiece g) $ concatMap (pieceMoves (board g) . first intToCoord) squares
-  where
-    squares
-      | frontTurn g = IM.assocs $ IM.filter whitePiece $ board g
-      | otherwise = IM.assocs $ IM.filter blackPiece $ board g
---    toGameState (b,r) = g {board = b, ratio = r}
-
-bestMove :: Int -> GameState -> GameState
-bestMove i g
-  | i == 0 = best (comparing ratio) $ allMoves g
-  | otherwise = best (comparing (ratio . bestMove (i-1) . bestMove 0)) $ allMoves g
---  | otherwise = bestMove 0 g
-  where
-    best = if frontTurn g then maximumBy else minimumBy
 
 whiteCoords :: Board -> [Coord]
 whiteCoords = map intToCoord . IM.keys . IM.filter whitePiece

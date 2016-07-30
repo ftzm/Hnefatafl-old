@@ -2,12 +2,9 @@
 -----------todo
 --accept options at startup regarding who is ai and who not.
 
---separate files into different modules
-
 --convert ratio to score when printing board
 --consider passing sqaures all the way through to movePiece instead of making it look them up again
 --loss if can't make a move
---consider
 
 --better appearance of board
 --       A   B   C   D   E   F   G   H   I   J   K
@@ -42,6 +39,16 @@
 
 --implement loss when black has no more pieces
 
---find better way to handle if there is no board or ratio chance on piece move than
+--find better way to handle if there is no board or ratio change on piece move than
 --resetting the same board and ratio on gamestate
 
+--AI ideas
+
+--general
+favour moves which yield the highest number of fruitful followup moves
+
+--offence--
+
+
+--defense--
+all else equal, protect corners
