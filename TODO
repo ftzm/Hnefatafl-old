@@ -1,54 +1,37 @@
-
------------todo
---accept options at startup regarding who is ai and who not.
-
+------------------------------------------------------------
+  GUI
+------------------------------------------------------------
 --convert ratio to score when printing board
---consider passing sqaures all the way through to movePiece instead of making it look them up again
+
+------------------------------------------------------------
+  Engine
+------------------------------------------------------------
+--shield wall capture
 --loss if can't make a move
-
---better appearance of board
---       A   B   C   D   E   F   G   H   I   J   K
---     +---+---+---+---+---+---+---+---+---+---+---+
---  1  |   |   |   | X | X | X | X | X |   |   |   |
---     +---+---+---+---+---+---+---+---+---+---+---+
---  2  |   |   |   | O |   | X |   |   |   |   |   |
---     +---+---+---+---+---+---+---+---+---+---+---+
---  3  |   |   |   |   |   |   |   |   |   |   |   |
---     +---+---+---+---+---+---+---+---+---+---+---+
---  4  |   |   |   |   |   |   |   |   |   |   |   |
---     +---+---+---+---+---+---+---+---+---+---+---+
---  5  |   |   |   |   |   |OOO|   |   |   |   |   |
---     +---+---+---+---+---+---+---+---+---+---+---+
---  6  |   |   |   |   |   |   |   |   |   |   |   |
---     +---+---+---+---+---+---+---+---+---+---+---+
---  7  |   |   |   |   |   |   |   |   |   |   |   |
---     +---+---+---+---+---+---+---+---+---+---+---+
---  8  |   |   |   |   |   |   |   |   |   |   |   |
---     +---+---+---+---+---+---+---+---+---+---+---+
---  9  |   |   |   |   |   |   |   |   |   |   |   |
---     +---+---+---+---+---+---+---+---+---+---+---+
--- 10  |   |   |   |   |   | X |   |   |   |   |   |
---     +---+---+---+---+---+---+---+---+---+---+---+
--- 11  |   |   |   | X | X | X | X | X |   |   |   |
---     +---+---+---+---+---+---+---+---+---+---+---+
-
---pause before ai move
-
--- mechanism for randomly choosing an ai strategy
--- pass in difficulty to ai
-
 --implement loss when black has no more pieces
+--find better way to handle if there is no board or ratio change on piece move than resetting the same board and ratio on gamestate
+--consider passing sqaures all the way through to movePiece instead of making it look them up again
+--select whether or not the ai is black or white
+-- mechanism for randomly choosing an ai strategy
+--surround capture
 
---find better way to handle if there is no board or ratio change on piece move than
---resetting the same board and ratio on gamestate
+------------------------------------------------------------
+  AI ideas
+------------------------------------------------------------
 
---AI ideas
+------general
+-- favour moves which yield the highest number of fruitful followup moves
+-- pass in difficulty to ai
+-- analyze courses of action based on multiple criteria, among them whether or not a piece is taken or lost, the queen's progress toward the corner, the number of good followup moves that a move enables, etc. it will become necessary to assign (somewhat arbitary) numerical values to each of these characteristics so that multiple moves can be compared against each-other.
+--sometimes choose a shortsighted move (an attempt at capture that could result the AI's piece being capture next turn) randomly a certain percentage of the time. The frequency of short-sighted moves could be a facet on which difficulty is adjusted.
 
---general
-favour moves which yield the highest number of fruitful followup moves
+-- look further ahead for queen moves
 
---offence--
+------white
 
 
---defense--
-all else equal, protect corners
+------black
+--all else equal, protect corners
+--inhibit queen movement if possible
+--check the selection candidates for potentially game-losing queen movement further in the future.
+--have an aggressive ai that is willing to lose a piece to take a piece.

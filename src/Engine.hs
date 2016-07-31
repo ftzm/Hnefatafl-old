@@ -30,7 +30,7 @@ data GameState = GameState
   deriving (Show)
 
 startGame :: GameState
-startGame = GameState startBoard 0 True False True --True
+startGame = GameState startBoard 0 True True True --True
 
 whitePiece :: Piece -> Bool
 whitePiece White = True
@@ -54,10 +54,10 @@ foes (_,a) (_,b) | whitePiece a = blackPiece b
                  | blackPiece a = whitePiece b
                  | otherwise    = False
 
---friends :: Square -> Square -> Bool
---friends (_,a) (_,b) | whitePiece a = whitePiece b
---                    | blackPiece a = blackPiece b
---                    | otherwise    = False
+friends :: Square -> Square -> Bool
+friends (_,a) (_,b) | whitePiece a = whitePiece b
+                    | blackPiece a = blackPiece b
+                    | otherwise    = False
 
 --opp :: Direction -> Direction
 --opp North = South
@@ -68,9 +68,9 @@ foes (_,a) (_,b) | whitePiece a = blackPiece b
 dirs :: [Direction]
 dirs = [North, South, East, West]
 
---perp :: Direction -> [Direction]
---perp d | d == North || d == South = [East,West]
---       | d == East  || d == West = [North,South]
+perp :: Direction -> [Direction]
+perp d | d == North || d == South = [East,West]
+       | d == East  || d == West = [North,South]
 
 coordToIntRaw :: Coord -> Int
 coordToIntRaw (x,y) = boardSize * y + x
@@ -121,11 +121,15 @@ pieceMoves b s@(c,p) = concatMap (map ((c,) . fst) . takeWhile (eligible . snd) 
   where eligible x | p /= King = x == Empty
                    | p == King = x == Empty || x == Corner
 
+ifMaybe :: a -> Bool -> Maybe a
+ifMaybe x True = Just x
+ifMaybe _ False = Nothing
+
 --given the board, square which may be taken and the direction to get there
 takePawn :: Board -> Direction -> Square -> Maybe [Square]
 takePawn _ _ (_,King) = Nothing
-takePawn b d s = (foes s <$> go b d s)
-               >>= \x -> if x then Just [s] else Nothing
+--takePawn b d s = ifMaybe [s] =<< (foes s <$> go b d s)
+takePawn b d s = ifMaybe [s] =<< (foes s <$> go b d s)
 
 --given the board, square which may be taken and the direction to get there
 takeKing :: Board -> Square -> Maybe [Square]
@@ -133,10 +137,30 @@ takeKing b s
   | length ( filter (foes s) $ mapMaybe (\x -> go b x s) dirs) == 4 = Just [s]
   | otherwise = Nothing
 
---shieldWall :: Board -> Direction -> Square -> Maybe [Square]
+-- |if square is at the edge of the board then the direction
+-- as Just Direction, otherwise Nothing
+fromEdge :: Square -> Maybe Direction
+fromEdge ((0,_),_) = Just East
+fromEdge ((10,_),_) = Just West
+fromEdge ((_,0),_) = Just South
+fromEdge ((_,10),_) = Just North
+fromEdge _ = Nothing
+
+--needs to work if closed on the broad side, now only works if closed on the end
+shieldWall :: Bool -> Board -> Direction -> Square -> Maybe [Square]
+shieldWall False b d s = fromEdge s >>= const (shieldWall True b d s)
+shieldWall True b d s
+  | foeBeside && foeBehind = Just [s]
+  | foeBeside && friendBehind = fmap (s:) (shieldWall True b d =<< go b d s)
+  | otherwise = Nothing
+  where behind = go b d s
+        beside = flip (go b) s =<< fromEdge s
+        foeBehind = maybe False (foes s) behind
+        friendBehind = maybe False (friends s) behind
+        foeBeside = maybe False (foes s) beside
 
 captures :: Board -> Direction -> Square -> Maybe [Square]
-captures b d s = takePawn b d s <|> takeKing b s
+captures b d s = takePawn b d s <|> shieldWall False b d s <|> takeKing b s
 
 --coordinate pawn takes, shieldwalls, and king takes
 takePieces :: Square -> Board -> Int -> Maybe (Board,Int)

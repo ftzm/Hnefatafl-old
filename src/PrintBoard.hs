@@ -1,6 +1,8 @@
 module PrintBoard
   ( selectByKey
   , displayboard
+  , pauseUntilKeypress
+  , withoutBuffering
   ) where
 
 import BoardData
@@ -68,8 +70,20 @@ weave (x:xs) ys = x : weave ys xs
 weave [] (y:_) = [y]
 weave [] [] = []
 
+colorizeBoard :: [String] -> [String]
+colorizeBoard = map (\x -> "\x1b[38;5;10m" ++ x ++ "\x1b[0m")
+
+colorizePieces :: [String] -> [String]
+colorizePieces = map rightColor
+  where rightColor s
+          | s == "X" = "\x1b[34m" ++ s ++ "\x1b[0m"
+          | s == "0" = "\x1b[33m" ++ s ++ "\x1b[0m"
+          | s == "1" = "\x1b[31m0\x1b[0m"
+          | s == "+" = "\x1b[38;5;10m" ++ s ++ "\x1b[0m"
+          | otherwise = "\x1b[35m" ++ s ++ "\x1b[0m"
+
 drawBoard :: String -> IO ()
-drawBoard s = putStrLn $ concat $ weave ( topSection ++ concat boardParts ++ [" |\n" ++ horiLine]) $ map (:[]) s
+drawBoard s = putStrLn $ concat $ weave (colorizeBoard $ topSection ++ concat boardParts ++ [" |\n" ++ horiLine]) $ colorizePieces $ map (:[]) s
   where boardParts = map betweenPieceRows numbers
 
 --don't show typing in terminal
@@ -84,12 +98,11 @@ withoutBuffering action = do
   old <- hGetBuffering stdin
   bracket_ (hSetBuffering stdin NoBuffering) (hSetBuffering stdin old) action
 
+pauseUntilKeypress :: IO ()
+pauseUntilKeypress = withoutBuffering $ withoutEcho getChar >> return ()
+
 displayboard :: Board -> IO ()
-displayboard b = do
-  clearScreen
-  drawBoard $ piecesToString b
-  _ <- withoutBuffering $ withoutEcho getChar
-  return ()
+displayboard b = clearScreen >> (drawBoard $ piecesToString b)
 
 selectByKey :: [Coord] -> Board -> MaybeT IO Coord
 selectByKey xs b = do
