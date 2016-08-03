@@ -137,7 +137,7 @@ takeKing b s
   | length ( filter (foes s) $ mapMaybe (\x -> go b x s) dirs) == 4 = Just [s]
   | otherwise = Nothing
 
--- |if square is at the edge of the board then the direction
+-- |if square is at the edge of the board then the direction inward
 -- as Just Direction, otherwise Nothing
 fromEdge :: Square -> Maybe Direction
 fromEdge ((0,_),_) = Just East
@@ -146,23 +146,35 @@ fromEdge ((_,0),_) = Just South
 fromEdge ((_,10),_) = Just North
 fromEdge _ = Nothing
 
---needs to work if closed on the broad side, now only works if closed on the end
-shieldWall :: Bool -> Board -> Direction -> Square -> Maybe [Square]
-shieldWall False b d s = fromEdge s >>= const (shieldWall True b d s)
-shieldWall True b d s
-  | foeBeside && foeBehind = Just [s]
-  | foeBeside && friendBehind = fmap (s:) (shieldWall True b d =<< go b d s)
+takeWhileIncl :: (a -> Bool) -> [a] -> [a]
+takeWhileIncl _ [] = []
+takeWhileIncl p (x:xs)
+  | p x = x : takeWhileIncl p xs
+  | otherwise = [x]
+
+--TODO use safeinit or something
+gatherCaps :: Board -> Square -> Direction -> Maybe [Square]
+gatherCaps b s d
+  | null squares = Nothing
+  | foes s $ last squares = Just $ init squares
   | otherwise = Nothing
-  where behind = go b d s
-        beside = flip (go b) s =<< fromEdge s
-        foeBehind = maybe False (foes s) behind
-        friendBehind = maybe False (friends s) behind
-        foeBeside = maybe False (foes s) beside
+    where squares = takeWhileIncl (friends s) $ toEdge b s d
+
+--TODO no king caveat
+shieldWall :: Board -> Square -> Maybe [Square]
+shieldWall b s
+  | Just inward <- fromEdge s
+  = mapM (\x -> ifMaybe x (foes x (fromJust $ go b inward x))) =<< row inward
+  | otherwise = Nothing
+    where
+      row d = ((s:) . concat) <$> mapM (gatherCaps b s) (perp d)
 
 captures :: Board -> Direction -> Square -> Maybe [Square]
-captures b d s = takePawn b d s <|> shieldWall False b d s <|> takeKing b s
+captures b d s = takePawn b d s <|> shieldWall b s <|> takeKing b s
 
 --coordinate pawn takes, shieldwalls, and king takes
+--TODO corners arent foes
+--TODO make not horrendous
 takePieces :: Square -> Board -> Int -> Maybe (Board,Int)
 takePieces s b r
   | null taken = Nothing
