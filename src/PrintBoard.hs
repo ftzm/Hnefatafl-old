@@ -83,8 +83,9 @@ colorizePieces = map rightColor
           | otherwise = "\x1b[35m" ++ s ++ "\x1b[0m"
 
 drawBoard :: String -> IO ()
-drawBoard s = putStrLn $ concat $ weave (colorizeBoard $ topSection ++ concat boardParts ++ [" |\n" ++ horiLine]) $ colorizePieces $ map (:[]) s
-  where boardParts = map betweenPieceRows numbers
+drawBoard s = putStrLn $ concat $ weave boardParts $ colorizePieces $ map (:[]) s
+  where numberParts = map betweenPieceRows numbers
+        boardParts = colorizeBoard $ topSection ++ concat numberParts ++ [" |\n" ++ horiLine]
 
 --don't show typing in terminal
 withoutEcho :: IO a -> IO a

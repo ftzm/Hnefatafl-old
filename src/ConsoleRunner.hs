@@ -1,14 +1,13 @@
+{-# LANGUAGE TupleSections #-}
 module ConsoleRunner where
 
 import Engine
 import PrintBoard
 import BasicAI
 
-
 import Control.Concurrent
 import Control.Monad.Trans.Maybe
-import Data.Maybe
---import System.IO
+import qualified Data.Map as M
 
 getYesNo :: IO Bool
 getYesNo = do
@@ -31,21 +30,34 @@ configureGame = do
       return $ startGame {blackIsHuman=blackAnswer}
      else return $ startGame {whiteIsHuman=False, blackIsHuman=True}
 
+--selectMove :: GameState -> IO GameState
+--selectMove g
+--  | M.null moves = return $ g {ratio = 100} -- make team specific
+--  | otherwise = displayboard b >> pauseUntilKeypress
+--   >> selectPiece >>= maybe retry (\x -> maybe (selectMove g) (return . movePiece g . (\x' -> (x,x'))) =<< selectDest x)
+--  where
+--    selectPiece = runMaybeT $ selectByKey (M.keys moves) b
+--    selectDest = runMaybeT . flip selectByKey b . (moves M.!)
+--    retry = putStrLn "Invalid choice" >> threadDelay 1000000 >> selectMove g
+--    moves = allMoves' g
+--    b = board g
+
 selectMove :: GameState -> IO GameState
 selectMove g = do
   let b = board g
-  let ft = frontTurn g
-  let coords = if ft then whiteCoords b else blackCoords b
-  displayboard b >> pauseUntilKeypress
-  piece' <- runMaybeT $ selectByKey coords b
-  case piece' of
-    Nothing -> putStrLn "Invalid choice" >> threadDelay 1000000 >> selectMove g
-    Just piece -> do
-      let square = fromJust $ getSquare piece b
-      move' <- runMaybeT $ selectByKey (map snd $ pieceMoves b square) b
-      case move' of
-        Nothing -> selectMove g
-        Just move -> return $ movePiece g (piece,move)
+  let moves = allMoves' g
+  if M.null moves
+     then return $ g {ratio = 100} -- make team specific
+     else do
+      displayboard b >> pauseUntilKeypress
+      piece' <- runMaybeT $ selectByKey (M.keys moves) b
+      case piece' of
+        Nothing -> putStrLn "Invalid choice" >> threadDelay 1000000 >> selectMove g
+        Just piece -> do
+          move' <- runMaybeT $ selectByKey (moves M.! piece) b
+          case move' of
+            Nothing -> selectMove g
+            Just move -> return $ movePiece g (piece,move)
 
 makeAIMove :: GameState -> IO GameState
 makeAIMove g = displayboard (board g) >> threadDelay 1000000 >> return ( generateMove g)
@@ -60,4 +72,4 @@ gameLoop g' = do
      else gameLoop $ return newGameState
 
 runGameLoop :: IO GameState
-runGameLoop = gameLoop $ configureGame
+runGameLoop = gameLoop configureGame

@@ -6,12 +6,9 @@
 ------------------------------------------------------------
   Engine
 ------------------------------------------------------------
---shield wall capture
---loss if can't make a move
 --implement loss when black has no more pieces
 --find better way to handle if there is no board or ratio change on piece move than resetting the same board and ratio on gamestate
 --consider passing sqaures all the way through to movePiece instead of making it look them up again
---select whether or not the ai is black or white
 -- mechanism for randomly choosing an ai strategy
 --surround capture
 

@@ -6,6 +6,8 @@ module Engine
   , movePiece --should be exported
   , getSquare --should be exported
   , pieceMoves --should be exported
+  , allMoves --should be exported
+  , allMoves' --should be exported
   , startGame --should be exported
   , intToCoord --for ai
   , whitePiece --for ai
@@ -13,9 +15,12 @@ module Engine
   ) where
 
 import qualified Data.IntMap.Strict as IM
+import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.List
 import Control.Applicative
+import Control.Monad
+import Control.Arrow
 
 import BoardData
 
@@ -54,10 +59,13 @@ foes (_,a) (_,b) | whitePiece a = blackPiece b
                  | blackPiece a = whitePiece b
                  | otherwise    = False
 
-friends :: Square -> Square -> Bool
-friends (_,a) (_,b) | whitePiece a = whitePiece b
-                    | blackPiece a = blackPiece b
-                    | otherwise    = False
+--friends :: Square -> Square -> Bool
+--friends (_,a) (_,b) | whitePiece a = whitePiece b
+--                    | blackPiece a = blackPiece b
+--                    | otherwise    = False
+
+sEq :: Square -> Square -> Bool
+sEq x y = snd x == snd y
 
 --opp :: Direction -> Direction
 --opp North = South
@@ -100,6 +108,9 @@ getPiece = IM.findWithDefault Empty
 putPiece :: Coord -> Piece -> Board -> Board
 putPiece c = IM.insert (coordToIntRaw c)
 
+putPieceBatch :: Board -> [Square] ->  Board
+putPieceBatch = foldl' (\b (x,y) -> putPiece x y b)
+
 getSquare :: Coord -> Board -> Maybe Square
 getSquare c m = (c,) . (`getPiece` m) <$> coordToInt c
 
@@ -110,16 +121,35 @@ go b d ((x,y),_) = getSquare (c d) b
         c East  = (x+1,y)
         c West  = (x-1,y)
 
---go' b s d = go b d s
-
 toEdge :: Board -> Square -> Direction -> [Square]
 toEdge b s d = tail . catMaybes . takeWhile (/=Nothing)
-            $ iterate (go b d =<<) (return s)
+            $ iterate (go b d =<<) (Just s)
 
 pieceMoves :: Board -> Square -> [(Coord, Coord)]
 pieceMoves b s@(c,p) = concatMap (map ((c,) . fst) . takeWhile (eligible . snd) . toEdge b s) dirs
   where eligible x | p /= King = x == Empty
                    | p == King = x == Empty || x == Corner
+
+pieceMoves' :: Board -> Square -> [Coord]
+pieceMoves' b s@(_,p) = concatMap (map fst . takeWhile (eligible . snd) . toEdge b s) dirs
+  where eligible x | p /= King = x == Empty
+                   | p == King = x == Empty || x == Corner
+
+allMoves :: GameState -> [GameState]
+allMoves g = map (movePiece g) $ concatMap (pieceMoves (board g) . first intToCoord) squares
+  where
+    squares
+      | frontTurn g = IM.assocs $ IM.filter whitePiece $ board g
+      | otherwise = IM.assocs $ IM.filter blackPiece $ board g
+
+allMoves' :: GameState -> M.Map Coord [Coord]
+allMoves' g = foldl' buildMap M.empty squares
+  where
+    buildMap acc s@(x,_)
+      | null $ pieceMoves (board g) s = acc
+      | otherwise = M.insert x (pieceMoves' (board g) s) acc
+    pType = if frontTurn g then whitePiece else blackPiece
+    squares = map (first intToCoord) $ IM.assocs $ IM.filter pType $ board g
 
 ifMaybe :: a -> Bool -> Maybe a
 ifMaybe x True = Just x
@@ -128,13 +158,14 @@ ifMaybe _ False = Nothing
 --given the board, square which may be taken and the direction to get there
 takePawn :: Board -> Direction -> Square -> Maybe [Square]
 takePawn _ _ (_,King) = Nothing
---takePawn b d s = ifMaybe [s] =<< (foes s <$> go b d s)
 takePawn b d s = ifMaybe [s] =<< (foes s <$> go b d s)
 
---given the board, square which may be taken and the direction to get there
+around :: Board -> Square -> [(Square, Direction)]
+around b s = mapMaybe (\x -> (,x) <$> go b x s) dirs
+
 takeKing :: Board -> Square -> Maybe [Square]
 takeKing b s
-  | length ( filter (foes s) $ mapMaybe (\x -> go b x s) dirs) == 4 = Just [s]
+  | length (filter (foes s . fst) $ around b s) == 4 = Just [s]
   | otherwise = Nothing
 
 -- |if square is at the edge of the board then the direction inward
@@ -152,28 +183,31 @@ takeWhileIncl p (x:xs)
   | p x = x : takeWhileIncl p xs
   | otherwise = [x]
 
---TODO use safeinit or something
+maybeInit :: [a] -> Maybe [a]
+maybeInit [] = Nothing
+maybeInit xs = Just $ init xs
+
+--bookendedRow :: Board -> Square -> Direction -> Maybe [Square]
+--bookendedRow =
+
 gatherCaps :: Board -> Square -> Direction -> Maybe [Square]
 gatherCaps b s d
   | null squares = Nothing
-  | foes s $ last squares = Just $ init squares
+  | foes s $ last squares = maybeInit squares
   | otherwise = Nothing
-    where squares = takeWhileIncl (friends s) $ toEdge b s d
+    where squares = takeWhileIncl (sEq s) $ toEdge b s d
 
---TODO no king caveat
 shieldWall :: Board -> Square -> Maybe [Square]
-shieldWall b s
-  | Just inward <- fromEdge s
-  = mapM (\x -> ifMaybe x (foes x (fromJust $ go b inward x))) =<< row inward
-  | otherwise = Nothing
+shieldWall _ (_,King) = Nothing
+shieldWall b s = liftM2 (>>=) row surrounded =<< fromEdge s
     where
       row d = ((s:) . concat) <$> mapM (gatherCaps b s) (perp d)
+      surrounded d = mapM (\x -> ifMaybe x (foes x (fromJust $ go b d x)))
 
-captures :: Board -> Direction -> Square -> Maybe [Square]
-captures b d s = takePawn b d s <|> shieldWall b s <|> takeKing b s
+captures :: Board -> Square -> Direction -> Maybe [Square]
+captures b s d = takePawn b d s <|> shieldWall b s <|> takeKing b s
 
 --coordinate pawn takes, shieldwalls, and king takes
---TODO corners arent foes
 --TODO make not horrendous
 takePieces :: Square -> Board -> Int -> Maybe (Board,Int)
 takePieces s b r
@@ -185,9 +219,9 @@ takePieces s b r
       | otherwise = if whitePiece $ snd $ head taken
                       then r - length taken
                       else r + length taken
-    deletePieces = foldl' (\b' (k,_) -> IM.insert (coordToIntRaw k) Empty b' ) b
+    deletePieces = putPieceBatch b . map ((,Empty) . fst)
     taken = concat $ mapMaybe (uncurry (captures b)) adjFoes
-    adjFoes = filter (foes s . snd) $ mapMaybe (\x -> (x,) <$> go b x s) dirs
+    adjFoes = filter (liftM2 (&&) (foes s) ((/=Corner) . snd) . fst) $ around b s
 
 moveEffect :: Square -> Board -> Int -> (Board,Int)
 moveEffect s@(c,p) b r
