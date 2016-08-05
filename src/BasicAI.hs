@@ -6,6 +6,10 @@ import Engine
 import Data.Ord
 import Data.List
 
+--escapeMoves :: Board -> Int
+
+--rateCorners :: Board -> Int
+
 bestMove :: Int -> GameState -> GameState
 bestMove i g
   | i == 0 = best (comparing ratio) $ allMoves g
