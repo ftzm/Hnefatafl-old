@@ -5,11 +5,14 @@ module Engine
   , blackCoords --iffy
   , movePiece --should be exported
   , getSquare --should be exported
+  , getPiece --should be exported
   , pieceMoves --should be exported
   , allMoves --should be exported
   , allMoves' --should be exported
+  , sEq --should be exported
   , startGame --should be exported
   , intToCoord --for ai
+  , coordToIntRaw --for ai
   , whitePiece --for ai
   , blackPiece --for ai
   ) where
@@ -24,18 +27,23 @@ import Control.Arrow
 
 import BoardData
 
+data GameStatus = Continue | KingCapture | NoPieces | NoMoves
+
 data GameState = GameState
     { board :: Board
     , ratio :: Int
     , whiteIsHuman :: Bool
     , blackIsHuman :: Bool
     , frontTurn :: Bool
+    , lastMove :: (Square,Square)
+    , whiteLosses :: Int
+    , blackLosses :: Int
 --    , continue :: Bool
     }
   deriving (Show)
 
 startGame :: GameState
-startGame = GameState startBoard 0 True True True --True
+startGame = GameState startBoard 0 True True True (((5,0),Black),((0,5),Black)) 0 0 --True
 
 whitePiece :: Piece -> Bool
 whitePiece White = True
@@ -229,14 +237,14 @@ moveEffect s@(c,p) b r
   | otherwise = fromMaybe (b,r) $ takePieces s b r
 
 movePiece :: GameState -> (Coord,Coord) -> GameState
-movePiece g (c1,c2) = g {board = newB, ratio = newR, frontTurn = not ft}
+movePiece g (c1,c2) = g {board=newB, ratio=newR, frontTurn=not ft, lastMove=((c1,v1),(c2,v1))}
   where
     b = board g
     r = ratio g
     ft = frontTurn g
-    (newB, newR) = moveEffect (c2,v1) (putPiece c2 v1 $ putPiece c1 v2 b) r
-    (_,v1) = fromJust $ getSquare c1 b
-    (_,v2) = fromJust $ getSquare c2 b
+    (newB, newR) = moveEffect (c2,v1) (putPieceBatch b [(c2,v1),(c1,v2)]) r
+    v1 = snd $ fromJust $ getSquare c1 b
+    v2 = snd $ fromJust $ getSquare c2 b
 
 whiteCoords :: Board -> [Coord]
 whiteCoords = map intToCoord . IM.keys . IM.filter whitePiece
