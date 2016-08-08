@@ -1,6 +1,19 @@
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module Engine
-  ( GameState(board,frontTurn,ratio,whiteIsHuman,blackIsHuman) --should be exported
+  ( GameState(board
+             ,whiteTurn
+             ,whiteIsHuman
+             ,blackIsHuman
+             ,whiteLosses
+             ,blackLosses
+             )
+  , Moves
+  , WinLose (Escape, KingCapture, NoMoves, NoPieces)
   , whiteCoords --iffy
   , blackCoords --iffy
   , movePiece --should be exported
@@ -8,13 +21,14 @@ module Engine
   , getPiece --should be exported
   , pieceMoves --should be exported
   , allMoves --should be exported
-  , allMoves' --should be exported
   , sEq --should be exported
   , startGame --should be exported
+  , runTurn --should be exported
   , intToCoord --for ai
   , coordToIntRaw --for ai
   , whitePiece --for ai
   , blackPiece --for ai
+  , startMoves
   ) where
 
 import qualified Data.IntMap.Strict as IM
@@ -23,27 +37,67 @@ import Data.Maybe
 import Data.List
 import Control.Applicative
 import Control.Monad
-import Control.Arrow
+import Control.Arrow hiding (left)
+import Control.Monad.State.Strict
 
 import BoardData
 
-data GameStatus = Continue | KingCapture | NoPieces | NoMoves
+data WinLose = KingCapture | Escape |  NoPieces | NoMoves
+  deriving (Eq, Show)
+
+newtype EitherT e m a = EitherT {runEitherT :: m (Either e a)}
+
+instance (Monad m) => Applicative (EitherT e m) where
+  pure = return
+  (<*>) = ap
+
+instance (Monad m) => Functor (EitherT e m) where
+  fmap = liftM
+
+instance MonadTrans (EitherT e) where
+  lift = EitherT . fmap Right
+
+instance (Monad m) => Monad (EitherT e m) where
+  return a = EitherT $ return $ Right a
+  x >>= f = EitherT $ runEitherT x >>= either (return . Left) (runEitherT . f)
+
+instance MonadState s m => MonadState s (EitherT e m) where
+  get = lift get
+  put = lift . put
+
+class MonadEither e m where
+  left :: e -> m a
+
+instance MonadEither e (Either e) where
+  left = Left
+
+instance Monad m => MonadEither e (EitherT e m) where
+  left = EitherT . return . left
+
+newtype TurnT a = TurnT {runTurnT :: EitherT WinLose (State GameState) a}
+  deriving (Applicative, Functor, Monad, MonadState GameState, MonadEither WinLose)
+
+doTurnT :: TurnT a -> GameState -> (Either WinLose a, GameState)
+doTurnT t = runState (runEitherT $ runTurnT t)
 
 data GameState = GameState
     { board :: Board
-    , ratio :: Int
     , whiteIsHuman :: Bool
     , blackIsHuman :: Bool
-    , frontTurn :: Bool
+    , whiteTurn :: Bool
     , lastMove :: (Square,Square)
     , whiteLosses :: Int
     , blackLosses :: Int
---    , continue :: Bool
     }
   deriving (Show)
 
+type Moves = M.Map Coord [Coord]
+
 startGame :: GameState
-startGame = GameState startBoard 0 True True True (((5,0),Black),((0,5),Black)) 0 0 --True
+startGame = GameState startBoard True True True (((5,0),Black),((0,5),Black)) 0 0 --True
+
+startMoves :: Moves
+startMoves = allMoves startGame
 
 whitePiece :: Piece -> Bool
 whitePiece White = True
@@ -143,21 +197,27 @@ pieceMoves' b s@(_,p) = concatMap (map fst . takeWhile (eligible . snd) . toEdge
   where eligible x | p /= King = x == Empty
                    | p == King = x == Empty || x == Corner
 
-allMoves :: GameState -> [GameState]
-allMoves g = map (movePiece g) $ concatMap (pieceMoves (board g) . first intToCoord) squares
-  where
-    squares
-      | frontTurn g = IM.assocs $ IM.filter whitePiece $ board g
-      | otherwise = IM.assocs $ IM.filter blackPiece $ board g
+--allMoves :: GameState -> [GameState]
+--allMoves g = map (movePiece g) $ concatMap (pieceMoves (board g) . first intToCoord) squares
+--  where
+--    squares
+--      | whiteTurn g = IM.assocs $ IM.filter whitePiece $ board g
+--      | otherwise = IM.assocs $ IM.filter blackPiece $ board g
 
-allMoves' :: GameState -> M.Map Coord [Coord]
-allMoves' g = foldl' buildMap M.empty squares
+allMoves :: GameState -> M.Map Coord [Coord]
+allMoves g = foldl' buildMap M.empty squares
   where
     buildMap acc s@(x,_)
       | null $ pieceMoves (board g) s = acc
       | otherwise = M.insert x (pieceMoves' (board g) s) acc
-    pType = if frontTurn g then whitePiece else blackPiece
+    pType = if whiteTurn g then whitePiece else blackPiece
     squares = map (first intToCoord) $ IM.assocs $ IM.filter pType $ board g
+
+whiteCoords :: Board -> [Coord]
+whiteCoords = map intToCoord . IM.keys . IM.filter whitePiece
+
+blackCoords :: Board -> [Coord]
+blackCoords = map intToCoord . IM.keys . IM.filter blackPiece
 
 ifMaybe :: a -> Bool -> Maybe a
 ifMaybe x True = Just x
@@ -195,9 +255,6 @@ maybeInit :: [a] -> Maybe [a]
 maybeInit [] = Nothing
 maybeInit xs = Just $ init xs
 
---bookendedRow :: Board -> Square -> Direction -> Maybe [Square]
---bookendedRow =
-
 gatherCaps :: Board -> Square -> Direction -> Maybe [Square]
 gatherCaps b s d
   | null squares = Nothing
@@ -215,40 +272,57 @@ shieldWall b s = liftM2 (>>=) row surrounded =<< fromEdge s
 captures :: Board -> Square -> Direction -> Maybe [Square]
 captures b s d = takePawn b d s <|> shieldWall b s <|> takeKing b s
 
---coordinate pawn takes, shieldwalls, and king takes
---TODO make not horrendous
-takePieces :: Square -> Board -> Int -> Maybe (Board,Int)
-takePieces s b r
-  | null taken = Nothing
-  | otherwise = Just (deletePieces taken,newRatio)
-  where
-    newRatio
-      | King `elem` map snd taken = -100
-      | otherwise = if whitePiece $ snd $ head taken
-                      then r - length taken
-                      else r + length taken
-    deletePieces = putPieceBatch b . map ((,Empty) . fst)
-    taken = concat $ mapMaybe (uncurry (captures b)) adjFoes
-    adjFoes = filter (liftM2 (&&) (foes s) ((/=Corner) . snd) . fst) $ around b s
+------------------------------------------------------------
+-- Turn Stuff
+------------------------------------------------------------
 
-moveEffect :: Square -> Board -> Int -> (Board,Int)
-moveEffect s@(c,p) b r
-  | p == King && c `elem` cornerCoords = (b,100)
-  | otherwise = fromMaybe (b,r) $ takePieces s b r
+movePiece :: (Coord,Coord) -> TurnT Square
+movePiece (c1,c2) = do
+    g <- get
+    b <- gets board
+    let v1 = snd $ fromJust $ getSquare c1 b
+    let  v2 = snd $ fromJust $ getSquare c2 b
+    let newB = putPieceBatch b [(c2,v1),(c1,v2)]
+    put $ g {board=newB, lastMove=((c1,v1),(c2,v1))}
+    return (c2,v1)
 
-movePiece :: GameState -> (Coord,Coord) -> GameState
-movePiece g (c1,c2) = g {board=newB, ratio=newR, frontTurn=not ft, lastMove=((c1,v1),(c2,v1))}
-  where
-    b = board g
-    r = ratio g
-    ft = frontTurn g
-    (newB, newR) = moveEffect (c2,v1) (putPieceBatch b [(c2,v1),(c1,v2)]) r
-    v1 = snd $ fromJust $ getSquare c1 b
-    v2 = snd $ fromJust $ getSquare c2 b
+escapeCheck :: Square -> TurnT Square
+escapeCheck s@(c,p)
+  | p == King && c `elem` cornerCoords = left Escape
+  | otherwise = return s
 
-whiteCoords :: Board -> [Coord]
-whiteCoords = map intToCoord . IM.keys . IM.filter whitePiece
+findCaptures :: Square -> TurnT [Square]
+findCaptures s = do
+  b <- gets board
+  let adjFoes = filter (liftM2 (&&) (foes s) ((/=Corner) . snd) . fst) $ around b s
+  return $ concat $ mapMaybe (uncurry (captures b)) adjFoes
 
-blackCoords :: Board -> [Coord]
-blackCoords = map intToCoord . IM.keys . IM.filter blackPiece
+processCaptures :: [Square] -> TurnT ()
+processCaptures xs
+  | King `elem` map snd xs = left KingCapture
+  | otherwise = get >>= \g -> put $ g {board = putPieceBatch (board g) $ map ((,Empty) . fst) xs}
 
+switchTurn :: () -> TurnT GameState
+switchTurn _ = get >>= (\g -> put $ g {whiteTurn = not $ whiteTurn g}) >> get
+
+nextMoves :: GameState -> TurnT Moves
+nextMoves = return . allMoves
+
+helplessCheck :: Moves -> TurnT Moves
+helplessCheck m = do
+  b <- gets board
+  when (M.null m) $ left $ if not (null ( blackCoords b))
+                           then NoMoves else NoPieces
+  return m
+
+runTurn :: GameState
+         -> (Coord, Coord)
+         -> (Either WinLose Moves, GameState)
+runTurn g mv = doTurnT actions g
+  where actions =   movePiece mv
+                >>= escapeCheck
+                >>= findCaptures
+                >>= processCaptures
+                >>= switchTurn
+                >>= nextMoves
+                >>= helplessCheck

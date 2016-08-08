@@ -25,6 +25,7 @@ library
                      , transformers
                      , vector
                      , unix == 2.7.1.0
+                     , mtl == 2.2.1
                      , ansi-terminal
   default-language:    Haskell2010
 
