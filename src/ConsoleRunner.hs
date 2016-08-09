@@ -4,7 +4,7 @@ module ConsoleRunner where
 import Engine
 import BoardData
 import PrintBoard
---import BasicAI
+import BasicAI
 
 import Control.Concurrent
 import Control.Monad.Trans.Maybe
@@ -45,9 +45,11 @@ selectMove g m = do
         Just move -> return (piece,move)
 
 makeAIMove :: GameState -> Moves -> IO (Either WinLose Moves, GameState)
-makeAIMove g m = runTurn g <$> (  displayboard (board g)
-                               >> threadDelay 1000000
-                               >> selectMove g m)
+--makeAIMove g m = runTurn g <$> (  displayboard (board g)
+--                               >> threadDelay 1000000
+ --                              >> selectMove g m)
+makeAIMove g m = displayboard (board g) >> threadDelay 1000000 >> (return $ generateMove g m)
+
 
 gameOverMessage :: WinLose -> IO ()
 gameOverMessage = putStrLn . message

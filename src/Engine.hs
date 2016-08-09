@@ -188,9 +188,30 @@ go b d ((x,y),_) = getSquare (c d) b
         c East  = (x+1,y)
         c West  = (x-1,y)
 
+------------------------------------------------------------
+-- alt go
+------------------------------------------------------------
+
+putPiece' :: Int -> Piece -> Board -> Board
+putPiece' = IM.insert
+
+getSquare' :: Board -> Int -> (Int,Piece)
+getSquare' b i = (i,IM.findWithDefault Empty i b)
+
+go' :: Board -> Direction -> (Int,Piece) -> Maybe (Int,Piece)
+go' b d (i,_) = getSquare' b . a <$> ifMaybe' i t
+  where (a,t) | North <- d = (,) (subtract 11) (>=11)
+              | South <- d = (,) (+11)         (<=109)
+              | East  <- d = (,) (+1)          ((/=10) . (`mod`11))
+              | West  <- d = (,) (subtract 1)  ((/=0)  . (`mod`11))
+
+------------------------------------------------------------
+------------------------------------------------------------
+
 toEdge :: Board -> Square -> Direction -> [Square]
-toEdge b s d = tail . catMaybes . takeWhile (/=Nothing)
+toEdge b s d = tail . catMaybes . takeWhile isJust
             $ iterate (go b d =<<) (Just s)
+
 
 pieceMoves' :: Board -> Square -> [Coord]
 pieceMoves' b s@(_,p) = concatMap (map fst . takeWhile (eligible . snd) . toEdge b s) dirs
@@ -222,6 +243,10 @@ blackCoords = map intToCoord . IM.keys . IM.filter blackPiece
 ifMaybe :: a -> Bool -> Maybe a
 ifMaybe x True = Just x
 ifMaybe _ False = Nothing
+
+ifMaybe' :: a -> (a -> Bool) -> Maybe a
+ifMaybe' x f | f x = Just x
+             | otherwise = Nothing
 
 --given the board, square which may be taken and the direction to get there
 takePawn :: Board -> Direction -> Square -> Maybe [Square]
