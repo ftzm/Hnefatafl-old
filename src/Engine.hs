@@ -19,7 +19,6 @@ module Engine
   , movePiece --should be exported
   , getSquare --should be exported
   , getPiece --should be exported
-  , pieceMoves --should be exported
   , allMoves --should be exported
   , sEq --should be exported
   , startGame --should be exported
@@ -90,6 +89,12 @@ data GameState = GameState
     , blackLosses :: Int
     }
   deriving (Show)
+
+toggleWhiteTurn :: GameState -> GameState
+toggleWhiteTurn g = g {whiteTurn = not $ whiteTurn g}
+
+writeBoard :: GameState -> Board -> GameState
+writeBoard g b = g { board = b}
 
 type Moves = M.Map Coord [Coord]
 
@@ -187,11 +192,6 @@ toEdge :: Board -> Square -> Direction -> [Square]
 toEdge b s d = tail . catMaybes . takeWhile (/=Nothing)
             $ iterate (go b d =<<) (Just s)
 
-pieceMoves :: Board -> Square -> [(Coord, Coord)]
-pieceMoves b s@(c,p) = concatMap (map ((c,) . fst) . takeWhile (eligible . snd) . toEdge b s) dirs
-  where eligible x | p /= King = x == Empty
-                   | p == King = x == Empty || x == Corner
-
 pieceMoves' :: Board -> Square -> [Coord]
 pieceMoves' b s@(_,p) = concatMap (map fst . takeWhile (eligible . snd) . toEdge b s) dirs
   where eligible x | p /= King = x == Empty
@@ -208,7 +208,7 @@ allMoves :: GameState -> M.Map Coord [Coord]
 allMoves g = foldl' buildMap M.empty squares
   where
     buildMap acc s@(x,_)
-      | null $ pieceMoves (board g) s = acc
+      | null $ pieceMoves' (board g) s = acc
       | otherwise = M.insert x (pieceMoves' (board g) s) acc
     pType = if whiteTurn g then whitePiece else blackPiece
     squares = map (first intToCoord) $ IM.assocs $ IM.filter pType $ board g
@@ -301,6 +301,7 @@ processCaptures :: [Square] -> TurnT ()
 processCaptures xs
   | King `elem` map snd xs = left KingCapture
   | otherwise = get >>= \g -> put $ g {board = putPieceBatch (board g) $ map ((,Empty) . fst) xs}
+
 
 switchTurn :: () -> TurnT GameState
 switchTurn _ = get >>= (\g -> put $ g {whiteTurn = not $ whiteTurn g}) >> get
