@@ -11,9 +11,11 @@ module Engine
              ,blackIsHuman
              ,whiteLosses
              ,blackLosses
+             ,lastMove
              )
   , Moves
   , WinLose (Escape, KingCapture, NoMoves, NoPieces)
+  , PostTurn
   , whiteCoords --iffy
   , blackCoords --iffy
   , movePiece --should be exported
@@ -89,6 +91,8 @@ data GameState = GameState
     , blackLosses :: Int
     }
   deriving (Show)
+
+type PostTurn = (Either WinLose Moves, GameState)
 
 toggleWhiteTurn :: GameState -> GameState
 toggleWhiteTurn g = g {whiteTurn = not $ whiteTurn g}
@@ -327,6 +331,12 @@ processCaptures xs
   | King `elem` map snd xs = left KingCapture
   | otherwise = get >>= \g -> put $ g {board = putPieceBatch (board g) $ map ((,Empty) . fst) xs}
 
+recordCaptures :: [Square] -> TurnT [Square]
+recordCaptures ss = do
+  g <- get
+  let losses = length ss
+  put $ if whiteTurn g then g {blackLosses = losses} else g {whiteLosses = losses}
+  return ss
 
 switchTurn :: () -> TurnT GameState
 switchTurn _ = get >>= (\g -> put $ g {whiteTurn = not $ whiteTurn g}) >> get
@@ -348,6 +358,7 @@ runTurn g mv = doTurnT actions g
   where actions =   movePiece mv
                 >>= escapeCheck
                 >>= findCaptures
+                >>= recordCaptures
                 >>= processCaptures
                 >>= switchTurn
                 >>= nextMoves

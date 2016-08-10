@@ -48,7 +48,7 @@ makeAIMove :: GameState -> Moves -> IO (Either WinLose Moves, GameState)
 --makeAIMove g m = runTurn g <$> (  displayboard (board g)
 --                               >> threadDelay 1000000
  --                              >> selectMove g m)
-makeAIMove g m = displayboard (board g) >> threadDelay 1000000 >> (return $ generateMove g m)
+makeAIMove g m = displayboard (board g) >> threadDelay 1000000 >> return ( generateMove g m)
 
 
 gameOverMessage :: WinLose -> IO ()
