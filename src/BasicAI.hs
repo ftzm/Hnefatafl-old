@@ -4,7 +4,6 @@ module BasicAI where
 --import BoardData
 import Engine
 import BoardData
-import Data.Maybe
 import qualified Data.Map as M
 
 import Data.Ord
@@ -22,7 +21,7 @@ blackStrategy g m = bestMove 1 (rateBlack,rateWhite) (Right m,g)
 --escapeMoves :: Board -> Int
 
 cornerGuards :: [[Coord]]
-cornerGuards = [[(0,2),(1,1),(2,0)],[(8,0),(9,1),(10,2)],[(0,8),(1,9),(2,10)]
+cornerGuards = map (map xyToInt) [[(0,2),(1,1),(2,0)],[(8,0),(9,1),(10,2)],[(0,8),(1,9),(2,10)]
                ,[(8,10),(9,9),(10,8)]]
 
 --maybe message about fuckyness
@@ -35,7 +34,7 @@ rateCorners g = score s2 - score s1
   where
     (s1,s2) = lastMove g
     score = maybe 0 rating . inGuard
-    rating = length . filter (sEq s1) . map (fromJust . flip getSquare (board g))
+    rating = length . filter (sEq s1) . map (getSquare (board g))
     inGuard s = find (elem $ fst s) cornerGuards
 
 allGameStates :: GameState -> Moves -> [PostTurn]

@@ -19,12 +19,8 @@ import qualified Data.IntMap.Strict as IM
 getPiece :: Int -> Board -> Piece
 getPiece = IM.findWithDefault Empty
 
-coordToIntRaw :: Coord -> Int
-coordToIntRaw (x,y) = boardSize * y + x
-
 piecesToString :: Board -> String
-piecesToString m = map (symbol . (`getPiece` m) . coordToIntRaw)
-              [(x,y) | y <- [0..10], x <- [0..10]]
+piecesToString m = map (symbol . (`getPiece` m)) [0..120]
   where
     symbol Black  = 'X'
     symbol White  = '0'
@@ -33,7 +29,7 @@ piecesToString m = map (symbol . (`getPiece` m) . coordToIntRaw)
     symbol Corner = '+'
 
 boardStringKeys :: [Coord] -> String -> String
-boardStringKeys ks b = V.toList $ V.fromList b V.// zip (map coordToIntRaw ks) ['a'..'z']
+boardStringKeys ks b = V.toList $ V.fromList b V.// zip ks ['a'..'z']
 
 alphaToIndex :: Char -> [Coord] -> Maybe Int
 alphaToIndex c xs = elemIndex c $ zipWith const ['a'..'z'] xs

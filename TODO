@@ -1,19 +1,14 @@
 ------------------------------------------------------------
   GUI
 ------------------------------------------------------------
---convert ratio to score when printing board
---more informative victory and loss messages
 
 ------------------------------------------------------------
   Engine
 ------------------------------------------------------------
---turn-taking function into engine, manage finding possible moves etc, feed in selection function
---find better way to handle if there is no board or ratio change on piece move than resetting the same board and ratio on gamestate
 --consider passing sqaures all the way through to movePiece instead of making it look them up again
 --choose AI for right kind of move
 -- mechanism for randomly choosing an ai strategy
 --surround capture
---distinguish between loss due to no moves or no pieces
 
 
 ------------------------------------------------------------

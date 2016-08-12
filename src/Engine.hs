@@ -5,32 +5,33 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Engine
-  ( GameState(board
-             ,whiteTurn
-             ,whiteIsHuman
-             ,blackIsHuman
-             ,whiteLosses
-             ,blackLosses
-             ,lastMove
-             )
-  , Moves
-  , WinLose (Escape, KingCapture, NoMoves, NoPieces)
-  , PostTurn
-  , whiteCoords --iffy
-  , blackCoords --iffy
-  , movePiece --should be exported
-  , getSquare --should be exported
-  , getPiece --should be exported
-  , allMoves --should be exported
-  , sEq --should be exported
-  , startGame --should be exported
-  , runTurn --should be exported
-  , intToCoord --for ai
-  , coordToIntRaw --for ai
-  , whitePiece --for ai
-  , blackPiece --for ai
-  , startMoves
-  ) where
+--  ( GameState(board
+--             ,whiteTurn
+--             ,whiteIsHuman
+--             ,blackIsHuman
+--             ,whiteLosses
+--             ,blackLosses
+--             ,lastMove
+--             )
+--  , Moves
+--  , WinLose (Escape, KingCapture, NoMoves, NoPieces)
+--  , PostTurn
+--  , whiteCoords --iffy
+--  , blackCoords --iffy
+--  , movePiece --should be exported
+--  , getSquare --should be exported
+--  , getPiece --should be exported
+--  , allMoves --should be exported
+--  , sEq --should be exported
+--  , startGame --should be exported
+--  , runTurn --should be exported
+--  --, intToCoord --for ai
+--  --, coordToIntRaw --for ai
+--  , whitePiece --for ai
+--  , blackPiece --for ai
+--  , startMoves
+--  ) where
+where
 
 import qualified Data.IntMap.Strict as IM
 import qualified Data.Map.Strict as M
@@ -38,7 +39,7 @@ import Data.Maybe
 import Data.List
 import Control.Applicative
 import Control.Monad
-import Control.Arrow hiding (left)
+--import Control.Arrow hiding (left)
 import Control.Monad.State.Strict
 
 import BoardData
@@ -94,16 +95,10 @@ data GameState = GameState
 
 type PostTurn = (Either WinLose Moves, GameState)
 
-toggleWhiteTurn :: GameState -> GameState
-toggleWhiteTurn g = g {whiteTurn = not $ whiteTurn g}
-
-writeBoard :: GameState -> Board -> GameState
-writeBoard g b = g { board = b}
-
 type Moves = M.Map Coord [Coord]
 
 startGame :: GameState
-startGame = GameState startBoard True True True (((5,0),Black),((0,5),Black)) 0 0 --True
+startGame = GameState startBoard True True True ((5,Black),(5,Black)) 0 0 --True
 
 startMoves :: Moves
 startMoves = allMoves startGame
@@ -118,17 +113,13 @@ blackPiece Black = True
 blackPiece _ = False
 
 foes :: Square -> Square -> Bool
-foes _         ((0,0)  ,_)      = True --Corner
-foes _         ((0,10) ,_)      = True --Corner
-foes _         ((10,0) ,_)      = True --Corner
-foes _         ((10,10),_)      = True --Corner
-foes (_,Black) ((5,5)  ,_)      = True --Throne
-foes (_,White) ((5,5),Empty)    = True --Throne
-foes (_,King)  ((5,5),Empty)    = True --Throne
-
-foes (_,a) (_,b) | whitePiece a = blackPiece b
-                 | blackPiece a = whitePiece b
-                 | otherwise    = False
+foes (_,p1) (c2,p2)
+  | elem c2 cornerCoords = True
+  | p1 == Black && c2 == throne = True
+  | whitePiece p1 && (c2,p2) == (throne,Empty) = True
+  | whitePiece p1 = blackPiece p2
+  | blackPiece p1 = whitePiece p2
+  | otherwise    = False
 
 --friends :: Square -> Square -> Bool
 --friends (_,a) (_,b) | whitePiece a = whitePiece b
@@ -151,59 +142,45 @@ perp :: Direction -> [Direction]
 perp d | d == North || d == South = [East,West]
        | d == East  || d == West = [North,South]
 
-coordToIntRaw :: Coord -> Int
-coordToIntRaw (x,y) = boardSize * y + x
-
-coordToInt :: Coord -> Maybe Int
-coordToInt c@(x,y)
-  | x < 0 || x > 10 || y < 0 || y > 10 = Nothing
-  | otherwise = Just $ coordToIntRaw c
-
-swap :: (a,b) -> (b,a)
-swap (x,y) = (y,x)
-
-intToCoord :: Int -> Coord
-intToCoord x = swap $ divMod x boardSize
+--swap :: (a,b) -> (b,a)
+--swap (x,y) = (y,x)
 
 startBoard :: Board
 startBoard = IM.fromList (whites ++ blacks ++ corners ++ king )
   where
-    whites = zip (map coordToIntRaw whiteStart) (repeat White)
-    blacks = zip (map coordToIntRaw blackStart) (repeat Black)
-    corners = zip (map coordToIntRaw cornerCoords) (repeat Corner)
-    king = [(coordToIntRaw kingStart,King)]
+    whites = zip whiteStart (repeat White)
+    blacks = zip blackStart (repeat Black)
+    corners = zip cornerCoords (repeat Corner)
+    king = [(throne,King)]
 
 getPiece :: Int -> Board -> Piece
 getPiece = IM.findWithDefault Empty
 
 putPiece :: Coord -> Piece -> Board -> Board
-putPiece c = IM.insert (coordToIntRaw c)
+putPiece = IM.insert
 
 putPieceBatch :: Board -> [Square] ->  Board
 putPieceBatch = foldl' (\b (x,y) -> putPiece x y b)
 
-getSquare :: Coord -> Board -> Maybe Square
-getSquare c m = (c,) . (`getPiece` m) <$> coordToInt c
-
-go :: Board -> Direction -> Square -> Maybe Square
-go b d ((x,y),_) = getSquare (c d) b
-  where c North = (x,y-1)
-        c South = (x,y+1)
-        c East  = (x+1,y)
-        c West  = (x-1,y)
+--getSquare' :: Coord -> Board -> Square
+--getSquare' c m = (c,) . (`getPiece` m) c
+--
+--go' :: Board -> Direction -> Square -> Maybe Square
+--go' b d ((x,y),_) = getSquare (c d) b
+--  where c North = (x,y-1)
+--        c South = (x,y+1)
+--        c East  = (x+1,y)
+--        c West  = (x-1,y)
 
 ------------------------------------------------------------
 -- alt go
 ------------------------------------------------------------
 
-putPiece' :: Int -> Piece -> Board -> Board
-putPiece' = IM.insert
+getSquare :: Board -> Int -> (Int,Piece)
+getSquare b i = (i,IM.findWithDefault Empty i b)
 
-getSquare' :: Board -> Int -> (Int,Piece)
-getSquare' b i = (i,IM.findWithDefault Empty i b)
-
-go' :: Board -> Direction -> (Int,Piece) -> Maybe (Int,Piece)
-go' b d (i,_) = getSquare' b . a <$> ifMaybe' i t
+go :: Board -> Direction -> (Int,Piece) -> Maybe (Int,Piece)
+go b d (i,_) = getSquare b . a <$> ifMaybe' i t
   where (a,t) | North <- d = (,) (subtract 11) (>=11)
               | South <- d = (,) (+11)         (<=109)
               | East  <- d = (,) (+1)          ((/=10) . (`mod`11))
@@ -212,15 +189,29 @@ go' b d (i,_) = getSquare' b . a <$> ifMaybe' i t
 ------------------------------------------------------------
 ------------------------------------------------------------
 
-toEdge :: Board -> Square -> Direction -> [Square]
-toEdge b s d = tail . catMaybes . takeWhile isJust
-            $ iterate (go b d =<<) (Just s)
+toEdge :: (Int,Piece) -> Direction -> [Int]
+toEdge (i,_) North = take (div i 11) $ tail $ iterate (subtract 11) i
+toEdge (i,_) South = takeWhile (<120) $ tail $ iterate (+11) i
+toEdge (i,_) East = takeWhile ((/=10) . (`mod`11)) $ tail $ iterate (+1) i
+toEdge (i,_) West = takeWhile ((/=0)  . (`mod`11)) $ tail $ iterate (subtract 1) i
+
+--fromEdge :: Square -> Maybe Direction
+--fromEdge s = just check if going a direction produces a nothing
+
+fromEdge :: Square -> Maybe Direction
+fromEdge (x,_)
+  | x < 11 = Just South
+  | x > 109 = Just North
+  | mod x 11 == 0 = Just East
+  | mod x 11 == 10 = Just West
+  | otherwise = Nothing
 
 
-pieceMoves' :: Board -> Square -> [Coord]
-pieceMoves' b s@(_,p) = concatMap (map fst . takeWhile (eligible . snd) . toEdge b s) dirs
-  where eligible x | p /= King = x == Empty
-                   | p == King = x == Empty || x == Corner
+--toEdge :: Board -> Square -> Direction -> [Square]
+--toEdge b s d = tail . catMaybes . takeWhile isJust
+--            $ iterate (go b d =<<) (Just s)
+
+
 
 --allMoves :: GameState -> [GameState]
 --allMoves g = map (movePiece g) $ concatMap (pieceMoves (board g) . first intToCoord) squares
@@ -229,6 +220,11 @@ pieceMoves' b s@(_,p) = concatMap (map fst . takeWhile (eligible . snd) . toEdge
 --      | whiteTurn g = IM.assocs $ IM.filter whitePiece $ board g
 --      | otherwise = IM.assocs $ IM.filter blackPiece $ board g
 
+pieceMoves' :: Board -> Square -> [Coord]
+pieceMoves' b s@(_,p) = concatMap (takeWhile (eligible . snd . getSquare b) . toEdge s) dirs
+  where eligible x | p /= King = x == Empty
+                   | p == King = x == Empty || x == Corner
+
 allMoves :: GameState -> M.Map Coord [Coord]
 allMoves g = foldl' buildMap M.empty squares
   where
@@ -236,13 +232,53 @@ allMoves g = foldl' buildMap M.empty squares
       | null $ pieceMoves' (board g) s = acc
       | otherwise = M.insert x (pieceMoves' (board g) s) acc
     pType = if whiteTurn g then whitePiece else blackPiece
-    squares = map (first intToCoord) $ IM.assocs $ IM.filter pType $ board g
+    squares = IM.assocs $ IM.filter pType $ board g
+
+--allMoves :: GameState -> Moves
+--allMoves g = foldl' walkRowY (foldl' walkRowX M.empty xBoard) yBoard
+--  where
+--    b = board g
+--    xBoard = map (\x -> map (+x) [0..10]) [0,11..110]
+--    yBoard = transpose xBoard
+--    walkRowX :: Moves -> [Coord] -> Moves
+--    walkRowX m = (\(x,y,z) -> x) . foldl' evalPiece1 (m,[],1000)
+--    walkRowY :: Moves -> [Coord] -> Moves
+--    walkRowY m = (\(x,y,z) -> x) . foldl' evalPiece2 (m,[],1000)
+--    evalPiece1 :: (M.Map Int [Int],[Int],Int) -> Int -> (M.Map Int [Int],[Int],Int)
+--    evalPiece1 (m,e,l) i
+--      | piece == Empty = collectEmpty
+--      | l == 1000 && elem piece friendPieces = (attachForward m,[],i)
+--      | l == 1000 = (m,[],1000)
+--      | elem piece friendPieces = (attachForward attachBackward,[],i)
+--      | otherwise = (attachBackward,[],1000)
+--        where
+--        piece = getPiece i b
+--        collectEmpty = (m,i:e,l)
+--        foeEncounter = (m,[],i)
+--        attachBackward  = M.insertWith (++) l e m
+--        attachForward m = ( M.insert i e m)
+--        friendPieces = if whiteTurn g then [White,King] else [Black]
+--    evalPiece2 :: (M.Map Int [Int],[Int],Int) -> Int -> (M.Map Int [Int],[Int],Int)
+--    evalPiece2 (m,e,l) i
+--      | piece == Empty = collectEmpty
+--      | l == 1000 && elem piece friendPieces = (attachForward m,[],i)
+--      | l == 1000 = (m,[],1000)
+--      | elem piece friendPieces = (attachForward attachBackward,[],i)
+--      | otherwise = (attachBackward,[],1000)
+--        where
+--        piece = getPiece i b
+--        collectEmpty = (m,i:e,l)
+--        foeEncounter = (m,[],i)
+--        attachBackward  = M.insertWith (++) l e m
+--        attachForward m = ( M.insertWith (++) i e m)
+--        friendPieces = if whiteTurn g then [White,King] else [Black]
+
 
 whiteCoords :: Board -> [Coord]
-whiteCoords = map intToCoord . IM.keys . IM.filter whitePiece
+whiteCoords = IM.keys . IM.filter whitePiece
 
 blackCoords :: Board -> [Coord]
-blackCoords = map intToCoord . IM.keys . IM.filter blackPiece
+blackCoords = IM.keys . IM.filter blackPiece
 
 ifMaybe :: a -> Bool -> Maybe a
 ifMaybe x True = Just x
@@ -267,12 +303,12 @@ takeKing b s
 
 -- |if square is at the edge of the board then the direction inward
 -- as Just Direction, otherwise Nothing
-fromEdge :: Square -> Maybe Direction
-fromEdge ((0,_),_) = Just East
-fromEdge ((10,_),_) = Just West
-fromEdge ((_,0),_) = Just South
-fromEdge ((_,10),_) = Just North
-fromEdge _ = Nothing
+--fromEdge :: Square -> Maybe Direction
+--fromEdge ((0,_),_) = Just East
+--fromEdge ((10,_),_) = Just West
+--fromEdge ((_,0),_) = Just South
+--fromEdge ((_,10),_) = Just North
+--fromEdge _ = Nothing
 
 takeWhileIncl :: (a -> Bool) -> [a] -> [a]
 takeWhileIncl _ [] = []
@@ -289,7 +325,7 @@ gatherCaps b s d
   | null squares = Nothing
   | foes s $ last squares = maybeInit squares
   | otherwise = Nothing
-    where squares = takeWhileIncl (sEq s) $ toEdge b s d
+    where squares = takeWhileIncl (sEq s) $ map (getSquare b) $ toEdge s d
 
 shieldWall :: Board -> Square -> Maybe [Square]
 shieldWall _ (_,King) = Nothing
@@ -309,8 +345,8 @@ movePiece :: (Coord,Coord) -> TurnT Square
 movePiece (c1,c2) = do
     g <- get
     b <- gets board
-    let v1 = snd $ fromJust $ getSquare c1 b
-    let  v2 = snd $ fromJust $ getSquare c2 b
+    let v1 = snd $ getSquare b c1
+    let v2 = snd $ getSquare b c2
     let newB = putPieceBatch b [(c2,v1),(c1,v2)]
     put $ g {board=newB, lastMove=((c1,v1),(c2,v1))}
     return (c2,v1)
