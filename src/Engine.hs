@@ -33,10 +33,11 @@ module Engine
 --  ) where
 where
 
-import qualified Data.IntMap.Strict as IM
+--import qualified Data.IntMap.Strict as IM
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.List
+import qualified Data.IntSet as S
 import Control.Applicative
 import Control.Monad
 --import Control.Arrow hiding (left)
@@ -145,22 +146,47 @@ perp d | d == North || d == South = [East,West]
 --swap :: (a,b) -> (b,a)
 --swap (x,y) = (y,x)
 
+--startBoard :: Board
+--startBoard = IM.fromList (whites' ++ blacks' ++ corners ++ king' )
+--  where
+--    whites' = zip whiteStart (repeat White)
+--    blacks' = zip blackStart (repeat Black)
+--    corners = zip cornerCoords (repeat Corner)
+--    king' = [(throne,King)]
+
 startBoard :: Board
-startBoard = IM.fromList (whites ++ blacks ++ corners ++ king )
-  where
-    whites = zip whiteStart (repeat White)
-    blacks = zip blackStart (repeat Black)
-    corners = zip cornerCoords (repeat Corner)
-    king = [(throne,King)]
+startBoard = Board {blacks=S.fromList blackStart
+                     ,whites=S.fromList whiteStart
+                     , king=throne
+                     }
+
+--getPiece :: Int -> Board -> Piece
+--getPiece = IM.findWithDefault Empty
+--
+--putPiece :: Coord -> Piece -> Board -> Board
+--putPiece = IM.insert
 
 getPiece :: Int -> Board -> Piece
-getPiece = IM.findWithDefault Empty
+getPiece i b
+  | S.member i $ blacks b = Black
+  | S.member i $ whites b = White
+  | i == king b = King
+  | otherwise = Empty
 
 putPiece :: Coord -> Piece -> Board -> Board
-putPiece = IM.insert
+putPiece i Black b = b {blacks = S.insert i $ blacks b}
+putPiece i White b = b {whites = S.insert i $ whites b}
+putPiece i King b = b {king=i}
 
 putPieceBatch :: Board -> [Square] ->  Board
 putPieceBatch = foldl' (\b (x,y) -> putPiece x y b)
+
+deletePiece :: Square -> Board -> Board
+deletePiece (i,Black) b = b {blacks = S.delete i $ blacks b}
+deletePiece (i,White) b = b {whites = S.delete i $ whites b}
+
+deletePieceBatch :: [Square] -> Board -> Board
+deletePieceBatch ss b = foldl' (\acc s -> deletePiece s acc) b ss
 
 --getSquare' :: Coord -> Board -> Square
 --getSquare' c m = (c,) . (`getPiece` m) c
@@ -177,7 +203,7 @@ putPieceBatch = foldl' (\b (x,y) -> putPiece x y b)
 ------------------------------------------------------------
 
 getSquare :: Board -> Int -> (Int,Piece)
-getSquare b i = (i,IM.findWithDefault Empty i b)
+getSquare b i = (i,getPiece i b)
 
 go :: Board -> Direction -> (Int,Piece) -> Maybe (Int,Piece)
 go b d (i,_) = getSquare b . a <$> ifMaybe' i t
@@ -231,8 +257,9 @@ allMoves g = foldl' buildMap M.empty squares
     buildMap acc s@(x,_)
       | null $ pieceMoves' (board g) s = acc
       | otherwise = M.insert x (pieceMoves' (board g) s) acc
-    pType = if whiteTurn g then whitePiece else blackPiece
-    squares = IM.assocs $ IM.filter pType $ board g
+    squares = if whiteTurn g
+                 then zip (S.toList $ whites $ board g) (repeat White)
+                 else zip (S.toList $ blacks $ board g) (repeat Black)
 
 --allMoves :: GameState -> Moves
 --allMoves g = foldl' walkRowY (foldl' walkRowX M.empty xBoard) yBoard
@@ -274,11 +301,11 @@ allMoves g = foldl' buildMap M.empty squares
 --        friendPieces = if whiteTurn g then [White,King] else [Black]
 
 
-whiteCoords :: Board -> [Coord]
-whiteCoords = IM.keys . IM.filter whitePiece
-
-blackCoords :: Board -> [Coord]
-blackCoords = IM.keys . IM.filter blackPiece
+--whiteCoords :: Board -> [Coord]
+--whiteCoords = IM.keys . IM.filter whitePiece
+--
+--blackCoords :: Board -> [Coord]
+--blackCoords = IM.keys . IM.filter blackPiece
 
 ifMaybe :: a -> Bool -> Maybe a
 ifMaybe x True = Just x
@@ -346,8 +373,8 @@ movePiece (c1,c2) = do
     g <- get
     b <- gets board
     let v1 = snd $ getSquare b c1
-    let v2 = snd $ getSquare b c2
-    let newB = putPieceBatch b [(c2,v1),(c1,v2)]
+    --let newB = putPieceBatch b [(c2,v1),(c1,v2)]
+    let newB = putPiece c2 v1 (deletePiece (c1,v1) b)
     put $ g {board=newB, lastMove=((c1,v1),(c2,v1))}
     return (c2,v1)
 
@@ -365,7 +392,7 @@ findCaptures s = do
 processCaptures :: [Square] -> TurnT ()
 processCaptures xs
   | King `elem` map snd xs = left KingCapture
-  | otherwise = get >>= \g -> put $ g {board = putPieceBatch (board g) $ map ((,Empty) . fst) xs}
+  | otherwise = get >>= \g -> put $ g {board = deletePieceBatch xs $ board g}
 
 recordCaptures :: [Square] -> TurnT [Square]
 recordCaptures ss = do
@@ -383,7 +410,7 @@ nextMoves = return . allMoves
 helplessCheck :: Moves -> TurnT Moves
 helplessCheck m = do
   b <- gets board
-  when (M.null m) $ left $ if not (null ( blackCoords b))
+  when (M.null m) $ left $ if not (S.null ( blacks b))
                            then NoMoves else NoPieces
   return m
 

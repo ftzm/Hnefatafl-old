@@ -1,6 +1,6 @@
 module BoardData where
 
-import qualified Data.IntMap.Strict as IM
+import qualified Data.IntSet as S
 
 data Piece = White | Black | King | Empty | Corner
   deriving (Show, Eq)
@@ -8,7 +8,7 @@ data Direction = North | South | East | West
   deriving (Show, Eq)
 type Coord = Int
 type Square = (Coord,Piece)
-type Board = IM.IntMap Piece
+--type Board = IM.IntMap Piece
 
 boardSize :: Int
 boardSize = 11
@@ -30,3 +30,12 @@ cornerCoords = map xyToInt [(0,0),(10,0),(0,10),(10,10)]
 
 throne :: Coord
 throne = xyToInt (5,5)
+
+data Board = Board
+    { blacks :: S.IntSet
+    , whites :: S.IntSet
+    , king :: Int
+    }
+  deriving (Show)
+
+

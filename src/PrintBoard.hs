@@ -6,6 +6,7 @@ module PrintBoard
   ) where
 
 import BoardData
+import qualified Data.IntSet as S
 
 import System.IO
 import System.Console.ANSI (clearScreen)
@@ -17,7 +18,11 @@ import qualified Data.Vector as V
 import qualified Data.IntMap.Strict as IM
 
 getPiece :: Int -> Board -> Piece
-getPiece = IM.findWithDefault Empty
+getPiece i b
+  | S.member i $ blacks b = Black
+  | S.member i $ whites b = White
+  | i == king b = King
+  | otherwise = Empty
 
 piecesToString :: Board -> String
 piecesToString m = map (symbol . (`getPiece` m)) [0..120]
