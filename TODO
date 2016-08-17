@@ -5,8 +5,11 @@
 ------------------------------------------------------------
   Engine
 ------------------------------------------------------------
---consider passing sqaures all the way through to movePiece instead of making it look them up again
---choose AI for right kind of move
+--moves to a 4 tuple with only the last coord in each dir
+--maybe back to x,y
+--consider lenses for field access
+--consider lenses for field access in state monad during turns
+--reorganize turn functions
 -- mechanism for randomly choosing an ai strategy
 --surround capture
 
@@ -15,19 +18,25 @@
   AI ideas
 ------------------------------------------------------------
 
+
+
+
 ------general
+
+--king threat = number of enemy pieces next to the king
+
+--king escape = find route(s) with the shortest number of moves to escape. more points for more routes.
+
+--
 -- favour moves which yield the highest number of fruitful followup moves
 -- pass in difficulty to ai
--- analyze courses of action based on multiple criteria, among them whether or not a piece is taken or lost, the queen's progress toward the corner, the number of good followup moves that a move enables, etc. it will become necessary to assign (somewhat arbitary) numerical values to each of these characteristics so that multiple moves can be compared against each-other.
---sometimes choose a shortsighted move (an attempt at capture that could result the AI's piece being capture next turn) randomly a certain percentage of the time. The frequency of short-sighted moves could be a facet on which difficulty is adjusted.
+--sometimes choose a shortsighted move (an attempt at capture that could result the AI's piece being capture next turn) randomly a certain percentage of the time. The frequency of short-sighted moves could be a facet on which difficulty is adjusted
 
--- look further ahead for queen moves
 
 ------white
 
 
 ------black
---all else equal, protect corners
 --inhibit queen movement if possible
 --check the selection candidates for potentially game-losing queen movement further in the future.
 --have an aggressive ai that is willing to lose a piece to take a piece.

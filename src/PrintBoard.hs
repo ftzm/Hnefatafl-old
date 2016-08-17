@@ -15,7 +15,7 @@ import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.Class
 import Data.List
 import qualified Data.Vector as V
-import qualified Data.IntMap.Strict as IM
+--import qualified Data.IntMap.Strict as IM
 
 getPiece :: Int -> Board -> Piece
 getPiece i b

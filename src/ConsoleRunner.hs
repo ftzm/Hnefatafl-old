@@ -39,7 +39,7 @@ selectMove g m = do
   case piece' of
     Nothing -> putStrLn "Invalid choice" >> threadDelay 1000000 >> selectMove g m
     Just piece -> do
-      move' <- runMaybeT $ selectByKey (m M.! piece) b
+      move' <- runMaybeT $ selectByKey (concat $ m M.! piece) b
       case move' of
         Nothing -> selectMove g m
         Just move -> return (piece,move)
@@ -71,4 +71,4 @@ gameLoop r g = either gameOver makeMove r
       else makeAIMove g x
 
 runGameLoop :: IO (Either WinLose Moves, GameState)
-runGameLoop = gameLoop (Right startMoves) =<< configureGame
+runGameLoop = gameLoop (Right startMovesWhite) =<< configureGame
