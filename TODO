@@ -15,20 +15,16 @@
 
 
 ------------------------------------------------------------
-  AI ideas
+  AI
 ------------------------------------------------------------
 
 
-
-
 ------general
+dont move adjacent ot throne
 
 --king threat = number of enemy pieces next to the king
 
---king escape = find route(s) with the shortest number of moves to escape. more points for more routes.
 
---
--- favour moves which yield the highest number of fruitful followup moves
 -- pass in difficulty to ai
 --sometimes choose a shortsighted move (an attempt at capture that could result the AI's piece being capture next turn) randomly a certain percentage of the time. The frequency of short-sighted moves could be a facet on which difficulty is adjusted
 
@@ -38,5 +34,4 @@
 
 ------black
 --inhibit queen movement if possible
---check the selection candidates for potentially game-losing queen movement further in the future.
 --have an aggressive ai that is willing to lose a piece to take a piece.

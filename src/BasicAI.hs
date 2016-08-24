@@ -11,6 +11,8 @@ import Data.Maybe
 import Data.List
 import Control.Monad
 
+import qualified Data.IntSet as S
+
 pickStrategy :: GameState -> (GameState -> Moves -> PostTurn)
 pickStrategy g = if whiteTurn g then whiteStrategy else blackStrategy
 
@@ -30,10 +32,73 @@ cornerGuards = map (map xyToInt) [[(0,2),(1,1),(2,0)],[(8,0),(9,1),(10,2)],[(0,8
 ratioBalanced :: GameState -> Int
 ratioBalanced g | whiteTurn g = 20 * (whiteLosses g - blackLosses g)
                 | otherwise   = 20 * (blackLosses g - whiteLosses g)
+------------------------------------------------------------
+--- Pathfinding
+------------------------------------------------------------
 
---movesToCoord
+discoverCoords :: S.IntSet -> [(Direction, [Coord])] -> S.IntSet
+discoverCoords = foldl' (\acc (_,x:_) -> S.insert x acc)
 
---kingSurrounding
+uniqueSndHead :: Eq b => [(a,[b])] -> [(a,[b])]
+uniqueSndHead = nubBy (\x y -> head (snd x)==head (snd y))
+
+noDiscovered :: S.IntSet -> [(Direction, [Coord])] -> [(Direction, [Coord])]
+noDiscovered ds = filter (\(_,x:_) -> S.notMember x ds)
+
+startTree :: Board -> Square -> ([(Direction, [Coord])],S.IntSet)
+startTree b s = (routes,discovered)
+  where
+    routes = concatMap (\x -> map (\y -> (x,[y])) (dirMoves b s x)) dirs
+    discovered = discoverCoords S.empty routes
+
+newBranching :: Board -> Coord -> Piece -> Direction -> [(Direction,Coord)]
+newBranching b c p d = concatMap (\x -> map (\y -> (x,y)) (dirMoves b (c,p) x)) $ perp d
+
+expandTree' :: Board -> Piece -> ([(Direction, [Coord])],S.IntSet) -> ([(Direction, [Coord])],S.IntSet)
+expandTree' b p (xs,ds) = (trimmedCoords,newDiscovered)
+ where
+   newCoords = concatMap (\(x,ys) -> map (\(k,i) -> (k,i:ys)) (newBranching b (head ys) p x)) xs
+   trimmedCoords = noDiscovered ds $ uniqueSndHead newCoords
+   newDiscovered = discoverCoords ds trimmedCoords
+
+foundRoute :: Coord -> ([(Direction, [Coord])],S.IntSet) -> Maybe [Coord]
+foundRoute g r = find ((g==) . head) $ map snd $ fst r
+
+findRoute :: Board -> Square -> Coord -> Maybe [Coord]
+findRoute b s@(_,p) g
+  | isNothing found = searchWider b p g initialSearch
+  | otherwise = found
+    where
+      initialSearch = startTree b s
+      found = foundRoute g initialSearch
+
+searchWider :: Board -> Piece -> Coord -> ([(Direction, [Coord])],S.IntSet) -> Maybe [Coord]
+searchWider b p g r
+  | isJust found = found
+  | exhausted = Nothing
+  | otherwise = searchWider b p g result
+    where
+      result = expandTree' b p r
+      exhausted = null $ fst result
+      found = foundRoute g result
+
+------------------------------------------------------------
+------------------------------------------------------------
+
+
+kingEscapeMoves :: GameState -> Int
+kingEscapeMoves g
+  | null moveNums = 0
+  | otherwise = sum $ map (\x -> 15-x) $ filter (<5) moveNums
+  where
+    b = board g
+    kingSquare = (king $ board g,King)
+    moveNums = map length $ mapMaybe (findRoute b kingSquare) cornerCoords
+
+kingSurrounding ::
+--kingsurrounding =
+
+enemiesAroundKing :: GameState -> Int
 
 
 --  Range: -2 - 3
@@ -73,7 +138,7 @@ vulnHere b s d = fromMaybe False $ liftM2 (&&) (friends s <$> s1) (liftM2 foes s
 -- |Given a square, see if any surrounding squares are threatened by it
 --  Range: 0 - 39 (13 per)
 threatenOther :: GameState -> Int
-threatenOther g = sum $ map (foesInRange g (foes s)) $ mapMaybe (vulnBehind b s) dirs
+threatenOther g = sum $ map (foesInRange g (friends s)) $ mapMaybe (vulnBehind b s) dirs
   where
     b = board g
     s = snd $ lastMove g
@@ -82,7 +147,7 @@ threatenOther g = sum $ map (foesInRange g (foes s)) $ mapMaybe (vulnBehind b s)
 --  Range: 0 - 39
 arrivalRisk :: GameState -> Int
 arrivalRisk g = sum
-                 $ map (foesInRange g (foes s))
+                 $ map (foesInRange g (mobileFoes s))
                  $ filter ((==Empty) . snd)
                  $ mapMaybe (go b s . opp)
                  $ filter (maybe False (foes s) . go b s) dirs
@@ -109,17 +174,18 @@ rateWhite (Left w) _
 
 blackConcerns :: [(GameState -> Int , Int -> Int , Int -> Int -> Int)]
 blackConcerns =
-  [(ratioBalanced, id, (+))
-  ,(rateCorners,   id, (+))
-  ,(threatenOther, id, (+))
-  ,(arrivalRisk,   id, (-))
-  ,(vacateRisk,    id, (-))
+  [(whiteLosses,     (*100),  (+))
+  ,(threatenOther,   id,      (+))
+  ,(rateCorners,     id,      (+))
+  ,(arrivalRisk,     (*100000), (-))
+  ,(vacateRisk,      id,      (-))
+  ,(kingEscapeMoves, (*1000), (-))
   ]
 
 evalConcerns :: GameState
              -> [(GameState -> Int , Int -> Int , Int -> Int -> Int)]
              -> Int
-evalConcerns g = foldl' (\acc (c,a,m) -> m (a $ c g) acc) 0
+evalConcerns g = foldl' (\acc (c,a,m) -> m acc (a $ c g)) 0
 
 rateBlack :: Either WinLose Moves -> GameState -> Int
 rateBlack (Right _) g = evalConcerns g blackConcerns
