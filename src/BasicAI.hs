@@ -10,7 +10,6 @@ import Data.Ord
 import Data.Maybe
 import Data.List
 import Control.Monad
-
 import qualified Data.IntSet as S
 
 pickStrategy :: GameState -> (GameState -> Moves -> PostTurn)
@@ -95,10 +94,13 @@ kingEscapeMoves g
     kingSquare = (king $ board g,King)
     moveNums = map length $ mapMaybe (findRoute b kingSquare) cornerCoords
 
-kingSurrounding ::
---kingsurrounding =
-
+--kingSurrounding ::
+----kingsurrounding =
+--
 enemiesAroundKing :: GameState -> Int
+enemiesAroundKing g = length $ filter (foes s) $ mapMaybe (go b s) dirs
+  where b = board g
+        s = snd $ lastMove g
 
 
 --  Range: -2 - 3
