@@ -20,18 +20,19 @@
 
 
 ------general
-dont move adjacent ot throne
 
 --king threat = number of enemy pieces next to the king
 
 
 -- pass in difficulty to ai
---sometimes choose a shortsighted move (an attempt at capture that could result the AI's piece being capture next turn) randomly a certain percentage of the time. The frequency of short-sighted moves could be a facet on which difficulty is adjusted
+--sometimes choose a shortsighted move (an attempt at capture that could result the AI's piece being capture next turn) randomly a certain what percentage of the time. The frequency of short-sighted moves could be a facet on which difficulty is adjusted
 
 
 ------white
 
 
 ------black
---inhibit queen movement if possible
+kingsurround priority up
+--write function to measure number of squares available to move to by king
+--DO NOT block corner by sitting adjacent to it
 --have an aggressive ai that is willing to lose a piece to take a piece.
