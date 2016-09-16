@@ -1,10 +1,9 @@
-------------------------------------------------------------
+-- ----------------------------------------------------------------------------
   GUI
-------------------------------------------------------------
 
-------------------------------------------------------------
+-- ----------------------------------------------------------------------------
   Engine
-------------------------------------------------------------
+
 --moves to a 4 tuple with only the last coord in each dir
 --maybe back to x,y
 --consider lenses for field access
@@ -14,19 +13,15 @@
 --surround capture
 
 
-------------------------------------------------------------
+-- ----------------------------------------------------------------------------
   AI
-------------------------------------------------------------
 
 
 ------general
+--arrivalrisk excludes king
 
---king threat = number of enemy pieces next to the king
-
-
--- pass in difficulty to ai
+--pass in difficulty to ai
 --sometimes choose a shortsighted move (an attempt at capture that could result the AI's piece being capture next turn) randomly a certain what percentage of the time. The frequency of short-sighted moves could be a facet on which difficulty is adjusted
-
 
 ------white
 

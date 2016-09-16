@@ -343,9 +343,6 @@ captures :: Board -> Square -> Direction -> Maybe [Square]
 captures b s d = takePawn b d s <|> shieldWall b s <|> takeKing b s
 
 ------------------------------------------------------------
-------------------------------------------------------------
-
-------------------------------------------------------------
 -- Turn Stuff
 ------------------------------------------------------------
 
@@ -412,9 +409,7 @@ helplessCheck m = do
                            then NoMoves else NoPieces
   return m
 
-runTurn :: GameState
-         -> (Coord, Coord)
-         -> (Either WinLose Moves, GameState)
+runTurn :: GameState -> (Coord, Coord) -> (Either WinLose Moves, GameState)
 runTurn g mv = doTurnT actions g
   where actions =   movePiece mv
                 >>= postMoveUpdateMoves
