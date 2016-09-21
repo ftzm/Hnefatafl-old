@@ -1,9 +1,16 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass  #-}
+{-# LANGUAGE FlexibleInstances  #-}
+
 module BoardData where
 
 import qualified Data.IntSet as S
+import GHC.Generics
+import Data.Aeson
+import qualified Data.Map.Strict as M
 
 data Piece = White | Black | King | Empty | Corner
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic, ToJSON, FromJSON)
 data Direction = North | South | East | West
   deriving (Show, Eq)
 type Coord = Int
@@ -36,6 +43,25 @@ data Board = Board
     , whites :: S.IntSet
     , king :: Int
     }
-  deriving (Show)
+  deriving (Show,Generic,ToJSON,FromJSON)
 
+type Moves = M.Map Coord [[Coord]]
 
+instance (ToJSON v) => ToJSON (M.Map Int v) where
+    toJSON = toJSON . (M.mapKeys show)
+
+instance (FromJSON v) => FromJSON (M.Map Int v) where
+    parseJSON = fmap (M.mapKeys read) . parseJSON
+
+data GameState = GameState
+    { board :: Board
+    , whiteIsHuman :: Bool
+    , blackIsHuman :: Bool
+    , whiteTurn :: Bool
+    , lastMove :: (Square,Square)
+    , whiteLosses :: Int
+    , blackLosses :: Int
+    , whiteMoves :: Moves
+    , blackMoves :: Moves
+    }
+  deriving (Show,Generic,ToJSON,FromJSON)

@@ -3,6 +3,10 @@
 {-# LANGUAGE UndecidableInstances  #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Engine
 --  ( GameState(board
@@ -33,9 +37,18 @@ module Engine
 --  ) where
 where
 
+import Data.Aeson
+import Data.Aeson.Encode.Pretty
+import Data.Monoid
+import Data.Aeson.TH
+import GHC.Generics
+import qualified Data.HashMap.Strict as H
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.List
+import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString.Lazy.Char8 as BS
+import qualified Data.ByteString.Internal as BI (ByteString)
 import qualified Data.IntSet as S
 import Control.Applicative
 import Control.Monad
@@ -81,22 +94,7 @@ newtype TurnT a = TurnT {runTurnT :: EitherT WinLose (State GameState) a}
 doTurnT :: TurnT a -> GameState -> (Either WinLose a, GameState)
 doTurnT t = runState (runEitherT $ runTurnT t)
 
-data GameState = GameState
-    { board :: Board
-    , whiteIsHuman :: Bool
-    , blackIsHuman :: Bool
-    , whiteTurn :: Bool
-    , lastMove :: (Square,Square)
-    , whiteLosses :: Int
-    , blackLosses :: Int
-    , whiteMoves :: Moves
-    , blackMoves :: Moves
-    }
-  deriving (Show)
-
 type PostTurn = (Either WinLose Moves, GameState)
-
-type Moves = M.Map Coord [[Coord]]
 
 startGame :: GameState
 startGame = GameState {board = startBoard
@@ -109,6 +107,9 @@ startGame = GameState {board = startBoard
                       ,whiteMoves = startMovesWhite
                       ,blackMoves = startMovesBlack
                       }
+
+gameToJSON :: GameState -> BI.ByteString
+gameToJSON x = BS.toStrict $ encodePretty (x :: GameState)
 
 startMovesWhite :: Moves
 startMovesWhite = allMovesSplit startGame

@@ -27,7 +27,5 @@
 
 
 ------black
-kingsurround priority up
---write function to measure number of squares available to move to by king
 --DO NOT block corner by sitting adjacent to it
 --have an aggressive ai that is willing to lose a piece to take a piece.

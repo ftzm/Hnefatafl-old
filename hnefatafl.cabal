@@ -1,5 +1,5 @@
 name:                hnefatafl
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            Initial project template from stack
 description:         Please see README.md
 homepage:            https://github.com/githubuser/hnefatafl#readme
@@ -15,10 +15,10 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     ConsoleRunner
-  other-modules:       PrintBoard
+  exposed-modules:     Engine
+                     , ConsoleRunner
                      , BoardData
-                     , Engine
+  other-modules:       PrintBoard
                      , BasicAI
   build-depends:       base >= 4.7 && < 5
                      , containers
@@ -27,6 +27,10 @@ library
                      , unix == 2.7.1.0
                      , mtl == 2.2.1
                      , ansi-terminal
+                     , aeson
+                     , aeson-pretty
+                     , bytestring
+                     , unordered-containers
   default-language:    Haskell2010
 
 executable hnefatafl-exe
