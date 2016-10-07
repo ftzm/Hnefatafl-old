@@ -4,6 +4,8 @@
 -- ----------------------------------------------------------------------------
   Engine
 
+--split files into different parts based on roles
+
 --moves to a 4 tuple with only the last coord in each dir
 --maybe back to x,y
 --consider lenses for field access
@@ -19,6 +21,12 @@
 
 ------general
 --arrivalrisk excludes king
+--function to assess changed risk to pieces affected by the last move
+--function to assess changed risk to pieces surrounding captures piece(s)
+
+--move selection
+ --instead of taking the first move with highest score, get all moves which share the highest score and choose a random one. So the game isn't so repetitive.
+
 
 --pass in difficulty to ai
 --sometimes choose a shortsighted move (an attempt at capture that could result the AI's piece being capture next turn) randomly a certain what percentage of the time. The frequency of short-sighted moves could be a facet on which difficulty is adjusted
