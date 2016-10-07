@@ -1,10 +1,15 @@
 {-# LANGUAGE TupleSections #-}
 
-module BasicAI where
+module BasicAI
+ (generateMove)
+where
 
---import BoardData
-import Engine
-import BoardData
+import Board
+import Moves
+import Turns
+import Capture
+import GameState
+
 import qualified Data.Map as M
 import Data.Ord
 import Data.Maybe
@@ -19,6 +24,15 @@ import qualified Data.IntSet as S
 
 type Trail = (Direction, [Coord])
 type SearchProgress = ([Trail], S.IntSet)
+
+dirs :: [Direction]
+dirs = [North,East,South,West]
+
+mobileFoes :: Square -> Square -> Bool
+mobileFoes (_,p1) (_,p2)
+  | whitePiece p1 = blackPiece p2
+  | blackPiece p1 = whitePiece p2
+  | otherwise    = False
 
 -- |Given a [(Direction, [Coord])] list, add new head coords to
 --  the list of discovered coordinates

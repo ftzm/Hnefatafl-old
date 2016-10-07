@@ -1,10 +1,14 @@
 {-# LANGUAGE TupleSections #-}
-module ConsoleRunner where
+module ConsoleRunner
+  (runGameLoop)
+where
 
-import Engine
-import BoardData
+import Board
 import PrintBoard
 import BasicAI
+import Turns
+import Engine
+import GameState
 
 import Control.Concurrent
 import Control.Monad.Trans.Maybe

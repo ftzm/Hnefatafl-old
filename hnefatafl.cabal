@@ -17,9 +17,13 @@ library
   hs-source-dirs:      src
   exposed-modules:     Engine
                      , ConsoleRunner
-                     , BoardData
+                     , Board
   other-modules:       PrintBoard
                      , BasicAI
+                     , Moves
+                     , Capture
+                     , Turns
+                     , GameState
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , transformers

@@ -5,27 +5,21 @@ module PrintBoard
   , withoutBuffering
   ) where
 
-import BoardData
+import Board
 import qualified Data.IntSet as S
 
 import System.IO
 import System.Console.ANSI (clearScreen)
 import Control.Exception --for withEcho
+import Control.Monad
 import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.Class
 import Data.List
 import qualified Data.Vector as V
 --import qualified Data.IntMap.Strict as IM
 
-getPiece :: Int -> Board -> Piece
-getPiece i b
-  | S.member i $ blacks b = Black
-  | S.member i $ whites b = White
-  | i == king b = King
-  | otherwise = Empty
-
 piecesToString :: Board -> String
-piecesToString m = map (symbol . (`getPiece` m)) [0..120]
+piecesToString m = map (symbol . getPiece m) [0..120]
   where
     symbol Black  = 'X'
     symbol White  = '0'
@@ -101,10 +95,11 @@ withoutBuffering action = do
   bracket_ (hSetBuffering stdin NoBuffering) (hSetBuffering stdin old) action
 
 pauseUntilKeypress :: IO ()
-pauseUntilKeypress = withoutBuffering $ withoutEcho getChar >> return ()
+--pauseUntilKeypress = withoutBuffering $ withoutEcho getChar >> return ()
+pauseUntilKeypress = void $ withoutEcho getChar
 
 displayboard :: Board -> IO ()
-displayboard b = clearScreen >> (drawBoard $ piecesToString b)
+displayboard b = clearScreen >> drawBoard ( piecesToString b)
 
 selectByKey :: [Coord] -> Board -> MaybeT IO Coord
 selectByKey xs b = do

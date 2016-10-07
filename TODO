@@ -4,8 +4,6 @@
 -- ----------------------------------------------------------------------------
   Engine
 
---split files into different parts based on roles
-
 --moves to a 4 tuple with only the last coord in each dir
 --maybe back to x,y
 --consider lenses for field access
@@ -13,6 +11,7 @@
 --reorganize turn functions
 -- mechanism for randomly choosing an ai strategy
 --surround capture
+--route functions needed for console runner, etc, through engine?
 
 
 -- ----------------------------------------------------------------------------
