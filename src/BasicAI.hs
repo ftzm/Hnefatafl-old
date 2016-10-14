@@ -149,7 +149,9 @@ threatenOther g = sum $ map (foesInRange g (friends s))
 -- |Given a square, see if it is threatened by surrounding squares.
 -- Range: 0 - 39
 arrivalRisk :: GameState -> Int
-arrivalRisk g = sum
+arrivalRisk g
+  | snd s == King = 0
+  | otherwise = sum
               $ map (foesInRange g (mobileFoes s))
               $ filter ((== Empty) . snd)
               $ mapMaybe (go b s . opp)

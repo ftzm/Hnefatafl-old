@@ -19,7 +19,6 @@
 
 
 ------general
---arrivalrisk excludes king
 --function to assess changed risk to pieces affected by the last move
 --function to assess changed risk to pieces surrounding captures piece(s)
 
@@ -34,5 +33,4 @@
 
 
 ------black
---DO NOT block corner by sitting adjacent to it
 --have an aggressive ai that is willing to lose a piece to take a piece.

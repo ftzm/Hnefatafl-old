@@ -96,7 +96,7 @@ withoutBuffering action = do
 
 pauseUntilKeypress :: IO ()
 --pauseUntilKeypress = withoutBuffering $ withoutEcho getChar >> return ()
-pauseUntilKeypress = void $ withoutEcho getChar
+pauseUntilKeypress = void $ withoutBuffering $ withoutEcho getChar
 
 displayboard :: Board -> IO ()
 displayboard b = clearScreen >> drawBoard ( piecesToString b)
