@@ -19,12 +19,6 @@ import Control.Applicative
 import Control.Arrow
 import qualified Data.IntSet as S
 
--- ----------------------------------------------------------------------------
--- Pathfinding
-
-type Trail = (Direction, [Coord])
-type SearchProgress = ([Trail], S.IntSet)
-
 dirs :: [Direction]
 dirs = [North,East,South,West]
 
@@ -33,6 +27,12 @@ mobileFoes (_,p1) (_,p2)
   | whitePiece p1 = blackPiece p2
   | blackPiece p1 = whitePiece p2
   | otherwise    = False
+
+-- ----------------------------------------------------------------------------
+-- Pathfinding
+
+type Trail = (Direction, [Coord])
+type SearchProgress = ([Trail], S.IntSet)
 
 -- |Given a [(Direction, [Coord])] list, add new head coords to
 --  the list of discovered coordinates

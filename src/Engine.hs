@@ -1,8 +1,3 @@
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE UndecidableInstances  #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Engine where
 
 import Board
