@@ -76,7 +76,6 @@ allDestinations b s@(_,p) = S.size $ snd $ last
 -- ----------------------------------------------------------------------------
 -- Board Judging Methods
 
--- |maybe message about fuckyness
 -- |Award 20 points for each piece taken, take 20 for each lost
 -- Range: -60 - 60
 ratioBalanced :: GameState -> Int
@@ -130,6 +129,10 @@ vulnBehind b s d = ifMaybe (fromJust s2)
   where s1 = go b s d
         s2 = flip (go b) d =<< s1
 
+enemyBehind :: Board -> Square -> Direction -> Bool
+enemyBehind b s d = fromMaybe False (foes s <$> go b s d)
+
+-- |Given a board, square, and direction, if the next square over in d is a friend and the square behind is an enemy, then return true.
 vulnHere :: Board -> Square -> Direction -> Bool
 vulnHere b s d =
     fromMaybe False $ liftM2 (&&) (friends s <$> s1) (liftM2 foes s1 s2)
@@ -160,28 +163,23 @@ arrivalRisk g
     b = board g
     s = snd $ lastMove g
 
--- |Given a square, see if it is threatened by surrounding squares.
--- Range: 0 - 39
-arrivalRisk' :: GameState -> Int
-arrivalRisk' g = sum $ getRisk $ openSquares $ oppositeSquares hostileAdjacent
-  where
-    b = board g
-    s = snd $ lastMove g
-    hostileAdjacent = filter (maybe False (foes s) . go b s) dirs
-    oppositeSquares = mapMaybe (go b s . opp)
-    openSquares = filter ((== Empty) . snd)
-    getRisk = map (foesInRange g (mobileFoes s))
-
+-- |
 --  Range: 0 - 13
 vacateRisk :: GameState -> Int
 vacateRisk g = if any (vulnHere b s) dirs then foesInRange g (foes s) s else 0
   where b = board g
         s = fst $ lastMove g
 
+
+
+-- |The ammount of squares available to the king to move to given unlimited
+-- moves. Encourages the AI to close in on the king.
 moveRoom :: GameState -> Int
 moveRoom g = allDestinations b kingSquare
   where b = board g
         kingSquare = (king $ board g, King)
+
+
 
 -- ----------------------------------------------------------------------------
 -- Judge Boards
