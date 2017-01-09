@@ -1,7 +1,9 @@
 {-# LANGUAGE TupleSections #-}
 
 module BasicAI
- (generateMove)
+ (generateMove,
+  allGameStates
+ )
 where
 
 import Board
@@ -42,9 +44,6 @@ discoverCoords = foldl' (\acc (_,x:_) -> S.insert x acc)
 removeDiscovered :: S.IntSet -> [Trail] -> [Trail]
 removeDiscovered ds = filter (\(_,x:_) -> S.notMember x ds)
 
-updateProgress :: SearchProgress -> [Trail] -> SearchProgress
-updateProgress (xs,ds) ms = (removeDiscovered ds ms, discoverCoords ds ms)
-
 newSearch :: Board -> Square -> SearchProgress
 newSearch b s = id &&& discoverCoords S.empty
               $ concatMap (\x -> map (\y -> (x,[y])) (dirMoves b s x)) dirs
@@ -52,6 +51,7 @@ newSearch b s = id &&& discoverCoords S.empty
 newMoves :: Board -> Piece -> Trail -> [Trail]
 newMoves b p (d,cs@(c:_)) = concatMap f $ perp d
   where f x = map ((x, ) . (: cs)) (dirMoves b (c, p) x)
+newMoves _ _ t = [t]
 
 growProg :: Board -> Piece -> SearchProgress -> SearchProgress
 growProg b p (xs,ds) = id &&& discoverCoords ds
@@ -61,7 +61,7 @@ route :: Coord -> SearchProgress -> Maybe [Coord]
 route g = find ((g ==) . head) . map snd . fst
 
 search :: Board -> Piece -> SearchProgress -> Coord -> Maybe [Coord]
-search b p ([],_) g = Nothing
+search _ _ ([],_) _ = Nothing
 search b p pr g = route g pr <|> search b p (growProg b p pr) g
 
 findRoute :: Board -> Square -> Coord -> Maybe [Coord]
@@ -76,15 +76,11 @@ allDestinations b s@(_,p) = S.size $ snd $ last
 -- ----------------------------------------------------------------------------
 -- Board Judging Methods
 
--- |Award 20 points for each piece taken, take 20 for each lost
--- Range: -60 - 60
-ratioBalanced :: GameState -> Int
-ratioBalanced g
-  | whiteTurn g = 20 * (whiteLosses g - blackLosses g)
-  | otherwise   = 20 * (blackLosses g - whiteLosses g)
+sqr :: Int -> Int
+sqr x = x*x
 
 kingEscapeMoves :: GameState -> Int
-kingEscapeMoves g = sum $ map (\x -> 15 - x) $ filter (< 5) moveNums
+kingEscapeMoves g = sum $ map (\x -> sqr $ 5 - x) $ filter (< 5) moveNums
   where
     b = board g
     kingSquare = (king $ board g, King)
@@ -129,8 +125,8 @@ vulnBehind b s d = ifMaybe (fromJust s2)
   where s1 = go b s d
         s2 = flip (go b) d =<< s1
 
-enemyBehind :: Board -> Square -> Direction -> Bool
-enemyBehind b s d = fromMaybe False (foes s <$> go b s d)
+--enemyBehind :: Board -> Square -> Direction -> Bool
+--enemyBehind b s d = fromMaybe False (foes s <$> go b s d)
 
 -- |Given a board, square, and direction, if the next square over in d is a friend and the square behind is an enemy, then return true.
 vulnHere :: Board -> Square -> Direction -> Bool
@@ -169,8 +165,6 @@ vacateRisk :: GameState -> Int
 vacateRisk g = if any (vulnHere b s) dirs then foesInRange g (foes s) s else 0
   where b = board g
         s = fst $ lastMove g
-
-
 
 -- |The ammount of squares available to the king to move to given unlimited
 -- moves. Encourages the AI to close in on the king.
@@ -213,13 +207,13 @@ blackConcerns =
 
 whiteConcerns :: [RateAngle]
 whiteConcerns =
-    [ (blackLosses,       (* 100),    (+))
-    , (threatenOther,     id,         (+))
-    , (kingEscapeMoves,   (* 1000),   (+))
-    , (moveRoom,          (* 10),     (+))
-    , (enemiesAroundKing, id,         (-))
-    , (arrivalRisk,       (* 100000), (-))
-    , (vacateRisk,        id,         (-))
+    [ (blackLosses,       (* 1000),      (+))
+    , (threatenOther,     id,           (+))
+    , (kingEscapeMoves,   (* 100000), (+))
+    , (moveRoom,          (* 10),       (+))
+    , (enemiesAroundKing, id,           (-))
+    , (arrivalRisk,       (* 100),     (-))
+    , (vacateRisk,        id,           (-))
     ]
 
 evalConcerns :: GameState -> [RateAngle] -> Int
@@ -228,17 +222,19 @@ evalConcerns g = foldl' (\acc (c,a,m) -> m acc (a $ c g)) 0
 rateBlack :: Either WinLose Moves -> GameState -> Int
 rateBlack (Right _) g = evalConcerns g blackConcerns
 rateBlack (Left w) _
-  | KingCapture <- w =  100
-  | NoMoves     <- w =  100
-  | Escape      <- w = -100
+  | KingCapture <- w =  100000000
+  | NoMoves     <- w =  100000000
+  | Escape      <- w = -1000000000000
+  | _           <- w =  0
 
 rateWhite :: Either WinLose Moves -> GameState -> Int
 rateWhite (Right _) g = evalConcerns g whiteConcerns
 rateWhite (Left w) _
-  | KingCapture <- w = -100
-  | NoMoves     <- w =  100
-  | NoPieces    <- w =  100
-  | Escape      <- w =  100
+  | KingCapture <- w = -100000000
+  | NoMoves     <- w =  100000000
+  | NoPieces    <- w =  100000000
+  | Escape      <- w =  100000000
+  | _           <- w =  0
 
 bestMove :: (Either WinLose Moves -> GameState -> Int) -> PostTurn -> PostTurn
 bestMove _ (Left m,g)  = (Left m, g)

@@ -75,4 +75,4 @@ gameLoop r g = either gameOver makeMove r
       else makeAIMove g x
 
 runGameLoop :: IO (Either WinLose Moves, GameState)
-runGameLoop = gameLoop (Right startMovesWhite) =<< configureGame
+runGameLoop = gameLoop (Right startMovesBlack) =<< configureGame

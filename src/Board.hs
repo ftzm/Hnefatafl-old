@@ -5,7 +5,8 @@
 module Board
   (Piece
     (White,Black,King,Empty,Corner)
-  ,Direction(North,East,South,West)
+  ,Direction
+    (North,East,South,West)
   ,Coord
   ,Square
   ,Board

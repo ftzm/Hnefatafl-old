@@ -1,0 +1,67 @@
+* GUI
+** TODO ncurses ai for hnefatafl
+   SCHEDULED: <2017-01-17 Tue>
+** TODO fix hnefatafl colors
+   SCHEDULED: <2017-01-17 Tue>
+* Engine
+** TODO loss after repeated moves
+** TODO implement history (potentially limited by the number of moves within which repetition is forbidden)
+** TODO surround capture
+** TODO game end when king occupies corner adacent sqaure. Saves time and cpu.
+** TODO improve code organization, potentially make even smaller files.
+** TODO separate board storage method such that one can easily swap out backends.
+   direct access to neighboard may turn out to be more important than fast lookup as i implement
+   remaining engine functions and more ai functions
+** reorganize turn functions?
+** route functions needed for console runner, etc, through engine?
+** consider lenses for field access
+** consider lenses for field access in state monad during turns
+** reconsider the postturn format
+*** it is good to have either wrap it to cut short evaluation, 
+** maybe back to x,y
+** maybe moves to a 4 tuple with only the last coord in each dir
+* AI
+** General
+*** TODO write a basic implementation of MCTS
+*** TODO better implementation of ai: combination of monte cristo tree search with board judgements I'm making
+*** Board evaluation
+**** TODO functions to assess changed risk to pieces affected by the last move
+***** was the piece in danger where it was
+      tweak this to make sure that when the king is blocked from the corner by a corner adjacent defender
+      and then moves out by just one square, the corner adjacent defender moves out as well to block instead
+      of bringing in a new piece, because otherwise the king will just move back and kill the original defender.
+      in practical terms this will mean scoring moving a (corner adjacent) carefully against king stoppage.
+      On second thought, this might be more easily solved by simply looking ahead one move, either usign MCTS or
+      a more basic manual lookahead of the best moves.
+***** is the piece in danger where it is now
+      already have a function for this, make sure it is in step so that there isn't a net positive for moving from
+      risk to risk for example
+***** does the absence of this piece in its previous position put its surrounding pieces at increased risk
+      basically check if the closest piece in one direction can threaten any pieces if it were to move to any
+      square on the other side or the vacated square.
+****** only need to analyze perpendicularly
+***** does moving to the new position prevent other things from being threatened
+****** only need to analyze perpendicularly
+***** does it threaten new pieces?
+****** only need to analyze perpendicularly
+**** TODO function to assess changed risk to pieces surrounding captured piece(s)
+**** don't award points for threatening a piece i want to exist
+**** awareness of which pieces are most important for blocking king, for example by finding route to corner which is shortest and has fewest pieces in it
+*** move selection
+**** instead of taking the first move with highest score, get all moves which share the highest score and choose a random one. So the game isn't so repetitive.
+*** pass in difficulty to ai
+*** hardest difficulty will only select from moves tied for best score. next hardest will select from moves with the two highest rankings, etc.
+*** sometimes choose a shortsighted move (an attempt at capture that could result the AI's piece being capture next turn) randomly a certain what percentage of the time. The frequency of short-sighted moves could be a facet on which difficulty is adjusted
+*** mechanism for randomly choosing an ai strategy
+*** lookahead one move on moves with large consequences, such as capturing a piece or putting a piece at risk. can substract positives of the next move from the positives of the original move.
+** White
+** Black
+*** TODO discourage protecting adjacent to corners
+*** prioritize corners just behind king stoppage, perhaps at roughly same level as taking
+*** when cutting off king moves prioritize moving next to a friendly piece
+*** no points for threatening pieces that are blocking king escape
+*** have an aggressive ai that is willing to lose a piece to take a piece.
+* Article
+** why hnefatafl presents and interesting ai challenge
+** methods tried vs those used
+** 

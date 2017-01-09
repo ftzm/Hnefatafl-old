@@ -5,16 +5,16 @@ import Moves
 import GameState
 
 startMovesWhite :: Moves
-startMovesWhite = allMovesSplit startGame
+startMovesWhite = allMovesSplit $ startGame {whiteTurn = True}
 
 startMovesBlack :: Moves
-startMovesBlack = allMovesSplit $ startGame {whiteTurn = False}
+startMovesBlack = allMovesSplit startGame
 
 startGame :: GameState
 startGame = GameState {board = startBoard
                       ,whiteIsHuman = True
                       ,blackIsHuman = True
-                      , whiteTurn = True
+                      , whiteTurn = False
                       ,lastMove = ((5,Black),(5,Black))
                       ,whiteLosses = 0
                       ,blackLosses = 0
