@@ -1,8 +1,7 @@
 {-# LANGUAGE TupleSections #-}
 
 module BasicAI
- (generateMove,
-  allGameStates
+ (generateMove
  )
 where
 
@@ -78,6 +77,9 @@ allDestinations b s@(_,p) = S.size $ snd $ last
 
 sqr :: Int -> Int
 sqr x = x*x
+
+escapeCoords :: [Coord]
+escapeCoords = map xyToInt [(0,0),(0,1),(1,0),(10,0),(9,0),(10,1),(0,10),(1,10),(0,9),(10,10),(9,10),(10,9)]
 
 kingEscapeMoves :: GameState -> Int
 kingEscapeMoves g = sum $ map (\x -> sqr $ 5 - x) $ filter (< 5) moveNums
@@ -219,26 +221,43 @@ whiteConcerns =
 evalConcerns :: GameState -> [RateAngle] -> Int
 evalConcerns g = foldl' (\acc (c,a,m) -> m acc (a $ c g)) 0
 
-rateBlack :: Either WinLose Moves -> GameState -> Int
-rateBlack (Right _) g = evalConcerns g blackConcerns
-rateBlack (Left w) _
+rateBlack :: PostTurn -> Int
+rateBlack (Right _,g) = evalConcerns g blackConcerns
+rateBlack (Left w,_)
   | KingCapture <- w =  100000000
   | NoMoves     <- w =  100000000
   | Escape      <- w = -1000000000000
   | _           <- w =  0
 
-rateWhite :: Either WinLose Moves -> GameState -> Int
-rateWhite (Right _) g = evalConcerns g whiteConcerns
-rateWhite (Left w) _
+rateWhite :: PostTurn -> Int
+rateWhite (Right _,g) = evalConcerns g whiteConcerns
+rateWhite (Left w,_)
   | KingCapture <- w = -100000000
   | NoMoves     <- w =  100000000
   | NoPieces    <- w =  100000000
   | Escape      <- w =  100000000
   | _           <- w =  0
 
-bestMove :: (Either WinLose Moves -> GameState -> Int) -> PostTurn -> PostTurn
+bestMove :: (PostTurn -> Int) -> PostTurn -> PostTurn
 bestMove _ (Left m,g)  = (Left m, g)
-bestMove r (Right m,g) = maximumBy (comparing (uncurry r)) $ allGameStates g m
+bestMove r (Right m,g) = maximumBy (comparing r) $ allGameStates g m
+
+generateMove' :: GameState -> Moves -> PostTurn
+generateMove' g = pickStrategy g g
+
+bestMoveRecur :: (PostTurn -> Int) --rating function applied this level
+               -> (PostTurn -> Int) --rating function applied the next level
+               -> Int --The level of recursion
+               -> PostTurn --The PostTurn to be scored
+               -> PostTurn --the chosen postmove
+bestMoveRecur r1 r2 _ p@(Left m,g) = p
+bestMoveRecur r1 r2 0 (Right m,g)
+  = maximumBy ( comparing r1 ) $ allGameStates g m
+bestMoveRecur r1 r2 x (Right m,g)
+  = maximumBy (comparing (r1 . bestMoveRecur r2 r1 (x-1)))
+  $ take 5 $ sortBy (comparing (Down . r1)) $ allGameStates g m
 
 generateMove :: GameState -> Moves -> PostTurn
-generateMove g = pickStrategy g g
+generateMove g m = bestMoveRecur r1 r2 2 (Right m,g)
+  where (r1,r2) = if whiteTurn g then (rateWhite,rateBlack)
+                  else (rateBlack,rateWhite)
