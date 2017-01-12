@@ -15,7 +15,7 @@ startGame = GameState {board = startBoard
                       ,whiteIsHuman = True
                       ,blackIsHuman = True
                       , whiteTurn = False
-                      ,lastMove = ((5,Black),(5,Black))
+                      ,lastMove = (((5,0),Black),((5,0),Black))
                       ,whiteLosses = 0
                       ,blackLosses = 0
                       ,whiteMoves = startMovesWhite

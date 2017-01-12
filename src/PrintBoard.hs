@@ -19,7 +19,7 @@ import qualified Data.Vector as V
 --import qualified Data.IntMap.Strict as IM
 
 piecesToString :: Board -> String
-piecesToString m = map (symbol . getPiece m) [0..120]
+piecesToString m = map (symbol . getPiece m) $ map intToXY [0..120]
   where
     symbol Black  = 'X'
     symbol White  = '0'
@@ -28,7 +28,7 @@ piecesToString m = map (symbol . getPiece m) [0..120]
     symbol Corner = '+'
 
 boardStringKeys :: [Coord] -> String -> String
-boardStringKeys ks b = V.toList $ V.fromList b V.// zip ks ['a'..'z']
+boardStringKeys ks b = V.toList $ V.fromList b V.// zip (map xyToInt ks) ['a'..'z']
 
 alphaToIndex :: Char -> [Coord] -> Maybe Int
 alphaToIndex c xs = elemIndex c $ zipWith const ['a'..'z'] xs

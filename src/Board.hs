@@ -17,7 +17,9 @@ module Board
   ,whites
   ,king
   ,xyToInt
+  ,intToXY
   ,startBoard
+  ,toEdge
   ,fromEdge
   ,go
   ,throne
@@ -31,11 +33,11 @@ where
 import qualified Data.IntSet as S
 import Data.List
 import GHC.Generics
-import Data.Aeson
+import Data.Maybe
 import qualified Data.Map.Strict as M
 
 data Piece = White | Black | King | Empty | Corner
-  deriving (Show, Eq, Generic, ToJSON, FromJSON)
+  deriving (Show, Eq, Generic)
 
 data Direction = North | South | East | West
   deriving (Show, Eq)
@@ -48,6 +50,9 @@ boardSize = 11
 
 xyToInt :: Coord -> Int
 xyToInt (x,y) = boardSize * y + x
+
+intToXY :: Int -> Coord
+intToXY x = (\(y,x) -> (x,y)) $ divMod x 11
 
 blackStart :: [Coord]
 blackStart = [(3,0),(4,0),(5,0),(6,0),(7,0),(5,1),(0,3),(10,3),(0,4),(10,4),
@@ -69,13 +74,7 @@ data Board = Board
     , whites :: S.IntSet
     , king :: Coord
     }
-  deriving (Show,Generic,ToJSON,FromJSON)
-
-instance (ToJSON v) => ToJSON (M.Map Int v) where
-    toJSON = toJSON . M.mapKeys show
-
-instance (FromJSON v) => FromJSON (M.Map Int v) where
-    parseJSON = fmap (M.mapKeys read) . parseJSON
+  deriving (Show)
 
 startBoard :: Board
 startBoard = Board {blacks=S.fromList $ map xyToInt blackStart
@@ -114,15 +113,18 @@ ifMaybe' :: a -> (a -> Bool) -> Maybe a
 ifMaybe' x f | f x = Just x
              | otherwise = Nothing
 
-maybeCoord :: Coord -> Direction -> Maybe Coord
-maybeCoord (x,y) d
-  | North <- d = (x,) . subtract 1 <$> ifMaybe' x (0>)
-  | South <- d = (x,) . (+1)       <$> ifMaybe' x (10<)
-  | East  <- d = (,y) . subtract 1 <$> ifMaybe' y (0>)
-  | West  <- d = (,y) . (+1)       <$> ifMaybe' y (10<)
+maybeCoord :: Direction -> Coord -> Maybe Coord
+maybeCoord d (x,y) 
+  | North <- d = (x,) . subtract 1 <$> ifMaybe' y (0<)
+  | South <- d = (x,) . (+1)       <$> ifMaybe' y (10>)
+  | East  <- d = (,y) . (+1)       <$> ifMaybe' x (10>)
+  | West  <- d = (,y) . subtract 1 <$> ifMaybe' x (0<)
 
 go :: Board -> Square -> Direction -> Maybe Square
-go b (c,_) d = getSquare b <$> maybeCoord c d
+go b (c,_) d = getSquare b <$> maybeCoord d c
+
+toEdge :: Square -> Direction -> [Coord]
+toEdge (c,_) d = map fromJust $ takeWhile isJust $ iterate (maybeCoord d =<<) $ maybeCoord d c
 
 fromEdge :: Square -> Maybe Direction
 fromEdge ((x,y),_)

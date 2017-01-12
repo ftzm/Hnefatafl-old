@@ -80,5 +80,5 @@ allMovesSplit g = foldl' buildMap M.empty squares
       | all null $ pieceMovesSplit (board g) s = acc
       | otherwise = M.insert x (pieceMovesSplit (board g) s) acc
     squares = if whiteTurn g
-                 then zip (S.toList $ whites $ board g) (repeat White)
-                 else zip (S.toList $ blacks $ board g) (repeat Black)
+                 then zip (map intToXY $ S.toList $ whites $ board g) (repeat White)
+                 else zip (map intToXY $ S.toList $ blacks $ board g) (repeat Black)

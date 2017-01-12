@@ -37,7 +37,4 @@ data GameState = GameState
     , whiteMoves :: Moves
     , blackMoves :: Moves
     }
-  deriving (Show,Generic,ToJSON,FromJSON)
-
-gameToJSON :: GameState -> BI.ByteString
-gameToJSON x = BS.toStrict $ encodePretty (x :: GameState)
+  deriving (Show)

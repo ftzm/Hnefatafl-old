@@ -42,10 +42,10 @@ type SearchProgress = ([Trail], S.IntSet)
 -- |Given a [(Direction, [Coord])] list, add new head coords to
 --  the list of discovered coordinates
 discoverCoords :: S.IntSet -> [Trail] -> S.IntSet
-discoverCoords = foldl' (\acc (_,x:_) -> S.insert x acc)
+discoverCoords = foldl' (\acc (_,x:_) -> S.insert (xyToInt x) acc)
 
 removeDiscovered :: S.IntSet -> [Trail] -> [Trail]
-removeDiscovered ds = filter (\(_,x:_) -> S.notMember x ds)
+removeDiscovered ds = filter (\(_,x:_) -> S.notMember (xyToInt x) ds)
 
 newSearch :: Board -> Square -> SearchProgress
 newSearch b s = id &&& discoverCoords S.empty
@@ -83,7 +83,7 @@ sqr :: Int -> Int
 sqr x = x*x
 
 escapeCoords :: [Coord]
-escapeCoords = map xyToInt [(0,0),(0,1),(1,0),(10,0),(9,0),(10,1),(0,10),(1,10),(0,9),(10,10),(9,10),(10,9)]
+escapeCoords = [(0,0),(0,1),(1,0),(10,0),(9,0),(10,1),(0,10),(1,10),(0,9),(10,10),(9,10),(10,9)]
 
 kingEscapeMoves :: GameState -> Int
 kingEscapeMoves g = sum $ map (\x -> sqr $ 7 - x) $ filter (< 7) moveNums
@@ -99,7 +99,7 @@ enemiesAroundKing g = length $ filter (foes s) $ mapMaybe (go b s) dirs
     s = getSquare b $ king b
 
 cornerGuards :: [[Coord]]
-cornerGuards = map (map xyToInt)
+cornerGuards =
         [ [(0, 2), (1, 1), (2, 0)]
         , [(8, 0), (9, 1), (10, 2)]
         , [(0, 8), (1, 9), (2, 10)]
