@@ -1,7 +1,10 @@
 {-# LANGUAGE TupleSections #-}
 
 module BasicAI
- (generateMove
+ (generateMove,
+  allGameStates,
+  expandGames,
+  test
  )
 where
 
@@ -10,6 +13,7 @@ import Moves
 import Turns
 import Capture
 import GameState
+import Engine
 
 import qualified Data.Map as M
 import Data.Ord
@@ -82,7 +86,7 @@ escapeCoords :: [Coord]
 escapeCoords = map xyToInt [(0,0),(0,1),(1,0),(10,0),(9,0),(10,1),(0,10),(1,10),(0,9),(10,10),(9,10),(10,9)]
 
 kingEscapeMoves :: GameState -> Int
-kingEscapeMoves g = sum $ map (\x -> sqr $ 5 - x) $ filter (< 5) moveNums
+kingEscapeMoves g = sum $ map (\x -> sqr $ 7 - x) $ filter (< 7) moveNums
   where
     b = board g
     kingSquare = (king $ board g, King)
@@ -102,13 +106,19 @@ cornerGuards = map (map xyToInt)
         , [(8, 10), (9, 9), (10, 8)]]
 
 --  Range: -2 - 3
-rateCorners :: GameState -> Int
-rateCorners g = score s2 - score s1
+rateCorners' :: GameState -> Int
+rateCorners' g = score s2 - score s1
   where
     (s1,s2) = lastMove g
     score = maybe 0 rating . inGuard
     rating = length . filter (sEq s1) . map (getSquare (board g))
     inGuard s = find (elem $ fst s) cornerGuards
+
+rateCorners :: GameState -> Int
+rateCorners g = length $ filter ( blackPiece . snd )
+              $ map (getSquare b) $ concat cornerGuards
+  where
+    b = board g
 
 -- |How many foes can move to a given empty square in one move?
 -- automatically 10 points if any, plus the number of foes.
@@ -161,6 +171,18 @@ arrivalRisk g
     b = board g
     s = snd $ lastMove g
 
+departedRisk :: GameState -> Int
+departedRisk g
+  | snd s == King = 0
+  | otherwise = sum
+              $ map (foesInRange g (mobileFoes s))
+              $ filter ((== Empty) . snd)
+              $ mapMaybe (go b s . opp)
+              $ filter (maybe False (foes s) . go b s) dirs
+  where
+    b = board g
+    s = fst $ lastMove g
+
 -- |
 --  Range: 0 - 13
 vacateRisk :: GameState -> Int
@@ -198,20 +220,22 @@ type RateAngle = (GameState -> Int, Int -> Int, Int -> Int -> Int)
 blackConcerns :: [RateAngle]
 blackConcerns =
     [ (whiteLosses,       (* 100),    (+))
-    , (threatenOther,     id,         (+))
-    , (rateCorners,       id,         (+))
-    , (enemiesAroundKing, (* 20),     (+))
-    , (arrivalRisk,       (* 100000), (-))
-    , (vacateRisk,        id,         (-))
-    , (kingEscapeMoves,   (* 1000),   (-))
-    , (moveRoom,          (* 10),     (-))
+--    , (threatenOther,     id,         (+))
+--    , (rateCorners,       (*100),     (+))
+--    , (enemiesAroundKing, (* 20),     (+))
+--    , (departedRisk,      (* 100000), (+))
+    , (blackLosses,       (* 100),    (-))
+--    , (arrivalRisk,       (* 100000), (-))
+--    , (vacateRisk,        id,         (-))
+--    , (kingEscapeMoves,   (* 1000),   (-))
+--    , (moveRoom,          (* 10),     (-))
     ]
 
 whiteConcerns :: [RateAngle]
 whiteConcerns =
     [ (blackLosses,       (* 1000),      (+))
     , (threatenOther,     id,           (+))
-    , (kingEscapeMoves,   (* 100000), (+))
+    , (kingEscapeMoves,   (* 10000), (+))
     , (moveRoom,          (* 10),       (+))
     , (enemiesAroundKing, id,           (-))
     , (arrivalRisk,       (* 100),     (-))
@@ -226,24 +250,24 @@ rateBlack (Right _,g) = evalConcerns g blackConcerns
 rateBlack (Left w,_)
   | KingCapture <- w =  100000000
   | NoMoves     <- w =  100000000
-  | Escape      <- w = -1000000000000
+  | Escape      <- w = -10000000000000000
   | _           <- w =  0
 
 rateWhite :: PostTurn -> Int
 rateWhite (Right _,g) = evalConcerns g whiteConcerns
 rateWhite (Left w,_)
-  | KingCapture <- w = -100000000
-  | NoMoves     <- w =  100000000
-  | NoPieces    <- w =  100000000
-  | Escape      <- w =  100000000
+  | KingCapture <- w = -1000000000000
+  | NoMoves     <- w =  1000000000000
+  | NoPieces    <- w =  1000000000000
+  | Escape      <- w =  1000000000000000
   | _           <- w =  0
 
 bestMove :: (PostTurn -> Int) -> PostTurn -> PostTurn
 bestMove _ (Left m,g)  = (Left m, g)
 bestMove r (Right m,g) = maximumBy (comparing r) $ allGameStates g m
 
-generateMove' :: GameState -> Moves -> PostTurn
-generateMove' g = pickStrategy g g
+generateMove :: GameState -> Moves -> PostTurn
+generateMove g = pickStrategy g g
 
 bestMoveRecur :: (PostTurn -> Int) --rating function applied this level
                -> (PostTurn -> Int) --rating function applied the next level
@@ -257,7 +281,17 @@ bestMoveRecur r1 r2 x (Right m,g)
   = maximumBy (comparing (r1 . bestMoveRecur r2 r1 (x-1)))
   $ take 5 $ sortBy (comparing (Down . r1)) $ allGameStates g m
 
-generateMove :: GameState -> Moves -> PostTurn
-generateMove g m = bestMoveRecur r1 r2 2 (Right m,g)
+generateMove' :: GameState -> Moves -> PostTurn
+generateMove' g m = bestMoveRecur r1 r2 2 (Right m,g)
   where (r1,r2) = if whiteTurn g then (rateWhite,rateBlack)
                   else (rateBlack,rateWhite)
+
+recur :: PostTurn -> [PostTurn]
+recur p@(Left _ , g) = [p]
+recur (Right m , g) = allGameStates g m
+
+expandGames :: [PostTurn] -> [PostTurn]
+expandGames = concatMap recur
+
+test = sum $ map rateBlack $ take 30000 $ expandGames $ expandGames $ expandGames $ allGameStates startGame startMovesBlack
+--test = sum $ map (\x -> 1) $ take 10000 $ expandGames $ expandGames $ expandGames $ allGameStates startGame startMovesBlack

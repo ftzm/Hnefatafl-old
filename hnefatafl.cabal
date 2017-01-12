@@ -18,8 +18,9 @@ library
   exposed-modules:     Engine
                      , ConsoleRunner
                      , Board
-  other-modules:       PrintBoard
+-- only testing, move to other after
                      , BasicAI
+  other-modules:       PrintBoard
                      , Moves
                      , Capture
                      , Turns
