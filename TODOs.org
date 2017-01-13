@@ -4,7 +4,18 @@
 ** TODO fix hnefatafl colors
    SCHEDULED: <2017-01-17 Tue>
 * Optimize
-** 
+** target functions
+*** getPiece
+**** try other storage methods, should be easier now. Try vector.
+**** Pie in the sky: custom 2d zipper.
+***** adjust square datatype so that it carries the board around it, means minimal adjustment to functions using go.
+*** findnextPiece
+**** using way too much memory, something's amiss.
+*** rewrite turn runner to non-monadic version (need not be pretty) to compare performance.
+**** if performance gains significant, look into optimization of monadic version.
+*** possible go efficiency gain
+**** surround board with edge squares, don't test each move for legitimacy, just hit an edge square when reached.
+***** either convert edge to nothing or deal with edge in functions.
 * Engine
 ** TODO loss after repeated moves
 ** TODO implement history (potentially limited by the number of moves within which repetition is forbidden)
