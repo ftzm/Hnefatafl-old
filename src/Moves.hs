@@ -29,8 +29,11 @@ dirMoves b s@(_,p) = takeWhile (eligible . snd . getSquare b) . toEdge s
 pieceMovesSplit :: Board -> Square -> [[Coord]]
 pieceMovesSplit b s = map (dirMoves b s) [North,East,South,West]
 
-findNextPiece :: Board -> Square -> Direction -> Maybe Square
-findNextPiece b s d = find (\(_,p) -> (p /= Empty && p /= Corner)) $ map (getSquare b) $ toEdge s d
+findNextPiece b s d = case go b s d of
+                         Just s'@(_,Empty) -> findNextPiece b s' d
+                         Just s'@(_,Corner) -> Nothing
+                         Just s'@(_,p) -> Just s'
+                         Nothing -> Nothing
 
 modifyWhiteMoves :: GameState -> (Moves -> Moves) -> GameState
 modifyWhiteMoves g f = g {whiteMoves = f $ whiteMoves g}
