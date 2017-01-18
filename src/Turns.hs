@@ -15,6 +15,7 @@ import Data.Maybe
 import Control.Monad.State.Strict
 import qualified Data.Map.Strict as M
 import qualified Data.IntSet as S
+import qualified Data.Vector.Unboxed as V
 
 import Board
 import Moves
@@ -65,9 +66,11 @@ movePiece :: (Coord,Coord) -> TurnT Square
 movePiece (c1,c2) = do
   g <- get
   b <- gets board
+  k <- gets king
   let v1 = snd $ getSquare b c1
   let newB = putPiece c2 v1 (deletePiece (c1,v1) b)
-  put $ g {board=newB, lastMove=((c1,v1),(c2,v1))}
+  let k2 = if c1 == k then c2 else k
+  put $ g {board=newB, lastMove=((c1,v1),(c2,v1)), king=k2}
   return (c2,v1)
 
 postMoveUpdateMoves :: Square -> TurnT Square
@@ -119,7 +122,7 @@ nextMoves g = do
 helplessCheck :: Moves -> TurnT Moves
 helplessCheck m = do
   b <- gets board
-  when (M.null m) $ left $ if not (S.null ( blacks b))
+  when (M.null m) $ left $ if (isJust $ V.find (==0) b )
                            then NoMoves else NoPieces
   return m
 

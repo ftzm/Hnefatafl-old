@@ -12,6 +12,7 @@ startMovesBlack = allMovesSplit startGame
 
 startGame :: GameState
 startGame = GameState {board = startBoard
+                      ,king = (5,5)
                       ,whiteIsHuman = True
                       ,blackIsHuman = True
                       , whiteTurn = False

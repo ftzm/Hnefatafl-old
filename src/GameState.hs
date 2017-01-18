@@ -1,14 +1,8 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass  #-}
 
 module GameState where
 
-import qualified Data.ByteString.Lazy.Char8 as BS (toStrict)
-import qualified Data.ByteString.Internal as BI (ByteString)
-import Data.Aeson
-import Data.Aeson.Encode.Pretty
 import qualified Data.Map.Strict as M
-import GHC.Generics
 
   --,GameState
   --  (board
@@ -28,6 +22,7 @@ type Moves = M.Map Coord [[Coord]]
 
 data GameState = GameState
     { board :: Board
+    , king :: Coord
     , whiteIsHuman :: Bool
     , blackIsHuman :: Bool
     , whiteTurn :: Bool

@@ -10,7 +10,6 @@ where
 
 import qualified Data.Map.Strict as M
 import Data.List
-import qualified Data.IntSet as S
 
 import Board
 import GameState
@@ -29,10 +28,11 @@ dirMoves b s@(_,p) = takeWhile (eligible . snd . getSquare b) . toEdge s
 pieceMovesSplit :: Board -> Square -> [[Coord]]
 pieceMovesSplit b s = map (dirMoves b s) [North,East,South,West]
 
+findNextPiece :: Board -> Square -> Direction -> Maybe Square
 findNextPiece b s d = case go b s d of
                          Just s'@(_,Empty) -> findNextPiece b s' d
-                         Just s'@(_,Corner) -> Nothing
-                         Just s'@(_,p) -> Just s'
+                         Just (_,Corner) -> Nothing
+                         Just s' -> Just s'
                          Nothing -> Nothing
 
 modifyWhiteMoves :: GameState -> (Moves -> Moves) -> GameState
@@ -83,5 +83,5 @@ allMovesSplit g = foldl' buildMap M.empty squares
       | all null $ pieceMovesSplit (board g) s = acc
       | otherwise = M.insert x (pieceMovesSplit (board g) s) acc
     squares = if whiteTurn g
-                 then zip (map intToXY $ S.toList $ whites $ board g) (repeat White)
-                 else zip (map intToXY $ S.toList $ blacks $ board g) (repeat Black)
+                 then zip whiteStart (repeat White)
+                 else zip blackStart (repeat Black)

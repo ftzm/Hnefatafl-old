@@ -13,9 +13,6 @@ module Board
   ,Board
   ,getSquare
   ,getPiece
-  ,blacks
-  ,whites
-  ,king
   ,xyToInt
   ,intToXY
   ,startBoard
@@ -27,14 +24,16 @@ module Board
   ,deletePieceBatch
   ,deletePiece
   ,putPiece
+  ,whiteStart
+  ,blackStart
   )
 where
 
-import qualified Data.IntSet as S
 import Data.List
+import Data.Int
 import GHC.Generics
 import Data.Maybe
-import qualified Data.Map.Strict as M
+import qualified Data.Vector.Unboxed as V
 
 data Piece = White | Black | King | Empty | Corner
   deriving (Show, Eq, Generic)
@@ -69,42 +68,88 @@ cornerCoords = [(0,0),(10,0),(0,10),(10,10)]
 throne :: Coord
 throne = (5,5)
 
-data Board = Board
-    { blacks :: S.IntSet
-    , whites :: S.IntSet
-    , king :: Coord
-    }
-  deriving (Show)
+--data Board' = Board'
+--    { blacks :: S.IntSet
+--    , whites :: S.IntSet
+--    , king :: Coord
+--    }
+--  deriving (Show)
+
+type Board = V.Vector Int8
+
+--startBoard :: Board
+--startBoard = Board {blacks=S.fromList $ map xyToInt blackStart
+--                   ,whites=S.fromList $ map xyToInt whiteStart
+--                   , king=throne
+--                   }
+
+emptyBoard :: Board
+emptyBoard = V.fromList $ replicate 121 0
 
 startBoard :: Board
-startBoard = Board {blacks=S.fromList $ map xyToInt blackStart
-                   ,whites=S.fromList $ map xyToInt whiteStart
-                   , king=throne
-                   }
+startBoard = foldl' putPieceBatch emptyBoard [bs, ws, cs, k]
+  where
+    bs = zip blackStart (repeat Black)
+    ws = zip whiteStart (repeat White)
+    cs = zip cornerCoords (repeat Corner)
+    k = [(throne,King)]
+
+--getPiece :: Board -> Coord -> Piece
+--getPiece b i
+--  | S.member (xyToInt i) $ blacks b = Black
+--  | S.member (xyToInt i) $ whites b = White
+--  | i `elem` cornerCoords = Corner
+--  | i == king b = King
+--  | otherwise = Empty
+
+int8ToPiece :: Int8 -> Piece
+int8ToPiece i
+  | i == 0 = Empty
+  | i == 1 = Black
+  | i == 2 = White
+  | i == 3 = Corner
+  | i == 4 = King
+
+pieceToInt8 :: Piece -> Int8
+pieceToInt8 p
+  | p == Empty  = 0
+  | p == Black  = 1
+  | p == White  = 2
+  | p == Corner = 3
+  | p == King   = 4
 
 getPiece :: Board -> Coord -> Piece
-getPiece b i
-  | S.member (xyToInt i) $ blacks b = Black
-  | S.member (xyToInt i) $ whites b = White
-  | i `elem` cornerCoords = Corner
-  | i == king b = King
-  | otherwise = Empty
+getPiece b c = int8ToPiece $ b V.! xyToInt c
+
+--putPiece :: Coord -> Piece -> Board -> Board
+--putPiece i Black b = b {blacks = S.insert (xyToInt i) $ blacks b}
+--putPiece i White b = b {whites = S.insert (xyToInt i) $ whites b}
+--putPiece i King b = b {king=i}
 
 putPiece :: Coord -> Piece -> Board -> Board
-putPiece i Black b = b {blacks = S.insert (xyToInt i) $ blacks b}
-putPiece i White b = b {whites = S.insert (xyToInt i) $ whites b}
-putPiece i King b = b {king=i}
+putPiece c p b = putPieceBatch b [(c,p)]
+
+--putPieceBatch :: Board -> [Square] ->  Board
+--putPieceBatch = foldl' (\b (x,y) -> putPiece x y b)
 
 putPieceBatch :: Board -> [Square] ->  Board
-putPieceBatch = foldl' (\b (x,y) -> putPiece x y b)
+putPieceBatch b ss = b V.// (map convert ss)
+  where
+    convert (c, p) = (xyToInt c, pieceToInt8 p)
+
+--deletePiece :: Square -> Board -> Board
+--deletePiece (i,Black) b = b {blacks = S.delete (xyToInt i) $ blacks b}
+--deletePiece (i,White) b = b {whites = S.delete (xyToInt i) $ whites b}
+--deletePiece (_,King) b = b
 
 deletePiece :: Square -> Board -> Board
-deletePiece (i,Black) b = b {blacks = S.delete (xyToInt i) $ blacks b}
-deletePiece (i,White) b = b {whites = S.delete (xyToInt i) $ whites b}
-deletePiece (_,King) b = b
+deletePiece (c,_) b = putPiece c Empty b
+
+--deletePieceBatch :: [Square] -> Board -> Board
+--deletePieceBatch ss b = foldl' (flip deletePiece) b ss
 
 deletePieceBatch :: [Square] -> Board -> Board
-deletePieceBatch ss b = foldl' (flip deletePiece) b ss
+deletePieceBatch ss b = putPieceBatch b $ zip (map fst ss) (repeat Empty)
 
 getSquare :: Board -> Coord -> (Coord,Piece)
 getSquare b i = (i,getPiece b i)
@@ -114,7 +159,7 @@ ifMaybe' x f | f x = Just x
              | otherwise = Nothing
 
 maybeCoord :: Direction -> Coord -> Maybe Coord
-maybeCoord d (x,y) 
+maybeCoord d (x,y)
   | North <- d = (x,) . subtract 1 <$> ifMaybe' y (0<)
   | South <- d = (x,) . (+1)       <$> ifMaybe' y (10>)
   | East  <- d = (,y) . (+1)       <$> ifMaybe' x (10>)

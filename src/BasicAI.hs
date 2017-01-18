@@ -89,14 +89,14 @@ kingEscapeMoves :: GameState -> Int
 kingEscapeMoves g = sum $ map (\x -> sqr $ 7 - x) $ filter (< 7) moveNums
   where
     b = board g
-    kingSquare = (king $ board g, King)
+    kingSquare = (king g, King)
     moveNums = map length $ mapMaybe (findRoute b kingSquare) cornerCoords
 
 enemiesAroundKing :: GameState -> Int
 enemiesAroundKing g = length $ filter (foes s) $ mapMaybe (go b s) dirs
   where
     b = board g
-    s = getSquare b $ king b
+    s = getSquare b $ king g
 
 cornerGuards :: [[Coord]]
 cornerGuards =
@@ -195,7 +195,7 @@ vacateRisk g = if any (vulnHere b s) dirs then foesInRange g (foes s) s else 0
 moveRoom :: GameState -> Int
 moveRoom g = allDestinations b kingSquare
   where b = board g
-        kingSquare = (king $ board g, King)
+        kingSquare = (king g, King)
 
 
 
