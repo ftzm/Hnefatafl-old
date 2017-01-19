@@ -1,11 +1,12 @@
 * GUI
-** TODO ncurses ai for hnefatafl
-   SCHEDULED: <2017-01-18 Wed>
-** TODO fix hnefatafl colors
-   SCHEDULED: <2017-01-18 Wed>
+** ncurses ai for hnefatafl
+** fix hnefatafl colors
 * Optimize
 ** target functions
 *** Update Moves Revision
+**** prep
+***** func to get direction of a move
+***** make sure perp is available
 **** Perpendicular to start position
 ***** for each direction, go 1 further than the last move (or from the piece if no moves) to check if there is a piece there
 ***** Add to its available moves the vacated square and the vacated squares moves in the opposite direction
@@ -16,23 +17,8 @@
 ***** go in each direction, gathering a list of coords with cons each step, then once a piece or the edge is found assign the list to the found piece and the reverse of the list to the arriving piece
 **** Still update moves in all directions around captures instad of coordinating with previous update from moved piece. Overlap will happen too seldom to matter.
 **** Consider using sequence instad of list for moves.
-*** getPiece
-**** try other storage methods, should be easier now. Try vector.
-**** Pie in the sky: custom 2d zipper.
-***** adjust square datatype so that it carries the board around it, means minimal adjustment to functions using go.
-*** findnextPiece
-**** using way too much memory, something's amiss.
-*** rewrite turn runner to non-monadic version (need not be pretty) to compare performance.
-**** if performance gains significant, look into optimization of monadic version.
-*** possible go efficiency gain
-**** surround board with edge squares, don't test each move for legitimacy, just hit an edge square when reached.
-***** either convert edge to nothing or deal with edge in functions.
-*** store moves as flat list rather than nests, not using nested lists for anything anyways
 * Engine
-** Make new king path finding function which allows to continue search on encountering 1(+) non-empty sqaure, saving which color that is.
-*** This will prevent the ai thinking that a single white piece blocking king escape is a viable situation.
-*** can potentially even expand with additional functions which would rate the capturability of obstructing pieces.
-** TODO fix helplessCheck
+** TODO Write a nice turn handler function. Export all logic to respective function outside of turn runner.
 ** TODO loss after repeated moves
 ** TODO implement history (potentially limited by the number of moves within which repetition is forbidden)
 ** TODO surround capture
@@ -41,14 +27,14 @@
 ** TODO separate board storage method such that one can easily swap out backends.
    direct access to neighboard may turn out to be more important than fast lookup as i implement
    remaining engine functions and more ai functions
+** Make new king path finding function which allows to continue search on encountering 1(+) non-empty sqaure, saving which color that is.
+*** This will prevent the ai thinking that a single white piece blocking king escape is a viable situation.
+*** can potentially even expand with additional functions which would rate the capturability of obstructing pieces.
 ** reorganize turn functions?
 ** route functions needed for console runner, etc, through engine?
 ** consider lenses for field access
 ** consider lenses for field access in state monad during turns
-** reconsider the postturn format
-*** it is good to have either wrap it to cut short evaluation, 
-** maybe back to x,y
-** maybe moves to a 4 tuple with only the last coord in each dir
+** moves datatype with dirs
 ** cleanup board initialization, especially startMovesSplit (make clear it's only used on initialization)
 * AI
 ** General
