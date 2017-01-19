@@ -85,3 +85,6 @@ allMovesSplit g = foldl' buildMap M.empty squares
     squares = if whiteTurn g
                  then zip whiteStart (repeat White)
                  else zip blackStart (repeat Black)
+
+updateAroundMoves :: Board -> (Square,Square) -> Moves -> Moves
+updateAroundMoves b (s,s) m = 

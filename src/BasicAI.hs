@@ -293,5 +293,5 @@ recur (Right m , g) = allGameStates g m
 expandGames :: [PostTurn] -> [PostTurn]
 expandGames = concatMap recur
 
-test = sum $ map rateBlack $ take 30000 $ expandGames $ expandGames $ expandGames $ allGameStates startGame startMovesBlack
+test = sum $ map rateBlack $ take 40000 $ expandGames $ expandGames $ expandGames $ allGameStates startGame startMovesBlack
 --test = sum $ map (\x -> 1) $ take 10000 $ expandGames $ expandGames $ expandGames $ allGameStates startGame startMovesBlack
