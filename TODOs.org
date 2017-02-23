@@ -1,11 +1,12 @@
 * GUI
-** TODO ncurses ai for hnefatafl
-   SCHEDULED: <2017-01-18 Wed>
-** TODO fix hnefatafl colors
-   SCHEDULED: <2017-01-18 Wed>
+** ncurses ai for hnefatafl
+** fix hnefatafl colors
 * Optimize
 ** target functions
 *** Update Moves Revision
+**** prep
+***** func to get direction of a move
+***** make sure perp is available
 **** Perpendicular to start position
 ***** for each direction, go 1 further than the last move (or from the piece if no moves) to check if there is a piece there
 ***** Add to its available moves the vacated square and the vacated squares moves in the opposite direction
@@ -33,10 +34,7 @@
 ** route functions needed for console runner, etc, through engine?
 ** consider lenses for field access
 ** consider lenses for field access in state monad during turns
-** reconsider the postturn format
-*** it is good to have either wrap it to cut short evaluation, 
-** maybe back to x,y
-** maybe moves to a 4 tuple with only the last coord in each dir
+** moves datatype with dirs
 ** cleanup board initialization, especially startMovesSplit (make clear it's only used on initialization)
 * AI
 ** General

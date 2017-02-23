@@ -108,6 +108,12 @@ postMoveUpdateMoves' t = t { gameState = g''}
     g' = updateMovesDelete g s1
     g'' = updateMovesAdd g' s2
 
+postMoveUpdateMoves'' :: TurnState -> TurnState
+postMoveUpdateMoves'' t = t { gameState = g'}
+  where
+    g = gameState t
+    g' = updateMoves g
+
 escapeCheck :: Square -> TurnT Square
 escapeCheck s@(c,p)
   | p == King && c `elem` cornerCoords = left Escape

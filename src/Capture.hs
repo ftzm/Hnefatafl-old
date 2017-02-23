@@ -31,15 +31,6 @@ friends (_,a) (_,b) | whitePiece a = whitePiece b
                     | blackPiece a = blackPiece b
                     | otherwise    = False
 
-whitePiece :: Piece -> Bool
-whitePiece White = True
-whitePiece King = True
-whitePiece _ = False
-
-blackPiece :: Piece -> Bool
-blackPiece Black = True
-blackPiece _ = False
-
 foes :: Square -> Square -> Bool
 foes (_,p1) (c2,p2)
   | c2 `elem` cornerCoords = True

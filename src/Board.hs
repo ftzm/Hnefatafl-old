@@ -26,6 +26,9 @@ module Board
   ,putPiece
   ,whiteStart
   ,blackStart
+  ,maybeCoord
+  ,whitePiece
+  ,blackPiece
   )
 where
 
@@ -144,3 +147,12 @@ fromEdge ((x,y),_)
   | y == 0  = Just South
   | y == 10 = Just North
   | otherwise = Nothing
+
+whitePiece :: Piece -> Bool
+whitePiece White = True
+whitePiece King = True
+whitePiece _ = False
+
+blackPiece :: Piece -> Bool
+blackPiece Black = True
+blackPiece _ = False
