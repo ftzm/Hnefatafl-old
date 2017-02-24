@@ -18,7 +18,7 @@ import qualified Data.Map.Strict as M
 
 import Board
 
-type Moves = M.Map Coord [[Coord]]
+type Moves = M.Map Coord (M.Map Direction [Coord])
 
 data GameState = GameState
     { board :: Board

@@ -16,6 +16,7 @@ where
 import qualified Data.Map.Strict as M
 import Data.List
 import Control.Applicative
+import Control.Lens hiding (Empty)
 
 import Board
 import GameState
@@ -37,8 +38,8 @@ dirMoves b s@(_,p) = takeWhile (eligible . snd . getSquare b) . toEdge s
   where eligible x | p == King = x == Empty || x == Corner
                    | otherwise = x == Empty
 
-pieceMovesSplit :: Board -> Square -> [[Coord]]
-pieceMovesSplit b s = map (dirMoves b s) [North,East,South,West]
+pieceMovesSplit :: Board -> Square -> M.Map Direction [Coord]
+pieceMovesSplit b s = foldl' (\acc x -> acc & at x ?~ dirMoves b s x) M.empty [North,East,South,West]
 
 findNextPiece :: Board -> Square -> Direction -> Maybe Square
 findNextPiece b s d = case go b s d of
@@ -57,18 +58,10 @@ modifyMoves :: Square -> (GameState -> (Moves -> Moves) -> GameState)
 modifyMoves (_,p) | p == Black = modifyBlackMoves | otherwise  = modifyWhiteMoves
 
 modifyDirMoves :: Coord -> Direction -> ([Coord] -> [Coord]) -> Moves -> Moves
-modifyDirMoves c d f m
-  | Just existing <- M.lookup c m = M.insert c (modify d existing) m
-  | Nothing <- M.lookup c m = M.insert c (modify d [[],[],[],[]]) m
-  where modify d' [h,i,j,k]
-          | North <- d' = [f h,i,j,k]
-          | East  <- d' = [h,f i,j,k]
-          | South <- d' = [h,i,f j,k]
-          | West  <- d' = [h,i,j,f k]
-        modify _ prev = prev
+modifyDirMoves c d f = at c . non M.empty . at d %~ (f <$>)
 
 writeDirMoves :: Square -> Direction -> [Coord] -> Moves -> Moves
-writeDirMoves (c,_) d cs = modifyDirMoves c d (\_ -> cs)
+writeDirMoves (c,_) d cs = at c . non M.empty . at d ?~ cs
 
 adjustDirMoves :: Square -> GameState -> Direction -> GameState
 adjustDirMoves s g d = maybe g (write g d) nextPiece
@@ -78,12 +71,13 @@ adjustDirMoves s g d = maybe g (write g d) nextPiece
     write g' d' s'= modifyMoves s' g' (writeDirMoves s' (opp d') (dirMoves b s' (opp d')))
 
 updateMovesAround :: GameState -> Square -> GameState
+
 updateMovesAround g s = foldl' (adjustDirMoves s) g [North,East,South,West]
 
 deleteMoves :: GameState -> Square -> GameState
 deleteMoves g s@(c,_) = modifyMoves s g (M.delete c)
 
-addMoves :: GameState -> Square -> [[Coord]] -> GameState
+addMoves :: GameState -> Square -> M.Map Direction [Coord] -> GameState
 addMoves g s@(c,_) ms = modifyMoves s g (M.insert c ms)
 
 updateMovesDelete :: GameState -> Square -> GameState
@@ -95,9 +89,7 @@ updateMovesAdd g s = updateMovesAround (addMoves g s (pieceMovesSplit (board g) 
 allMovesSplit :: GameState -> Moves
 allMovesSplit g = foldl' buildMap M.empty squares
   where
-    buildMap acc s@(x,_)
-      | all null $ pieceMovesSplit (board g) s = acc
-      | otherwise = M.insert x (pieceMovesSplit (board g) s) acc
+    buildMap acc s@(x,_) = M.insert x (pieceMovesSplit (board g) s) acc
     squares = if whiteTurn g
                  then zip whiteStart (repeat White)
                  else zip blackStart (repeat Black)
@@ -110,14 +102,10 @@ moveDir ((x1,y1),(x2,y2))
   | otherwise = South
 
 getDirDestinations :: GameState -> Square -> Direction -> [Coord]
-getDirDestinations g (c,p) d
-  | North <- d = n
-  | East  <- d = e
-  | South <- d = s
-  | West  <- d = w
+getDirDestinations g (c,p) d = ms ^. at c . _Just ^. at d . non []
+
   where
     ms = if whitePiece p then whiteMoves g else blackMoves g
-    [n,e,s,w] = ms M.! c
 
 -- ---------------------------------------------------------------------------
 -- Functions for updating the map of moves.
@@ -198,7 +186,7 @@ updateMoves :: GameState -> GameState
 updateMoves g
   = updateAlongMove dest mDir
   $ updatePerpDestination dest mDir
-  $ (\g' -> addMoves g' dest [[],[],[],[]])
+  $ (\g' -> addMoves g' dest (M.fromList $ map (,[]) [North,East,South,West]))
   $ flip deleteMoves origin
   $ updatePerpOrigin origin mDir g
   where

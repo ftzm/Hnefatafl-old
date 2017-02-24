@@ -42,7 +42,7 @@ data Piece = White | Black | King | Empty | Corner
   deriving (Show, Eq, Generic)
 
 data Direction = North | South | East | West
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 type Coord = (Int, Int)
 type Square = (Coord,Piece)

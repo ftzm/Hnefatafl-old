@@ -36,6 +36,7 @@ library
                      , aeson-pretty
                      , bytestring
                      , unordered-containers
+                     , lens
   default-language:    Haskell2010
 
 executable hnefatafl-exe
