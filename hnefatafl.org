@@ -2,21 +2,6 @@
 ** ncurses ai for hnefatafl
 ** fix hnefatafl colors
 * Optimize
-** target functions
-*** Update Moves Revision
-**** prep
-***** func to get direction of a move
-***** make sure perp is available
-**** Perpendicular to start position
-***** for each direction, go 1 further than the last move (or from the piece if no moves) to check if there is a piece there
-***** Add to its available moves the vacated square and the vacated squares moves in the opposite direction
-**** Behind the Move
-***** go 1 further than the last move (or from the piece if no moves) to check if there is a piece there
-***** add the vacated square and the squares up until the destination
-**** Perpendicular to and in front of the destination
-***** go in each direction, gathering a list of coords with cons each step, then once a piece or the edge is found assign the list to the found piece and the reverse of the list to the arriving piece
-**** Still update moves in all directions around captures instad of coordinating with previous update from moved piece. Overlap will happen too seldom to matter.
-**** Consider using sequence instad of list for moves.
 * Engine
 ** TODO Write a nice turn handler function. Export all logic to respective function outside of turn runner.
 ** TODO loss after repeated moves
@@ -25,6 +10,7 @@
 ** TODO game end when king occupies corner adacent sqaure. Saves time and cpu.
 ** TODO improve code organization, potentially make even smaller files.
 ** TODO separate board storage method such that one can easily swap out backends.
+** don't directly reference board storage method in 
    direct access to neighboard may turn out to be more important than fast lookup as i implement
    remaining engine functions and more ai functions
 ** Make new king path finding function which allows to continue search on encountering 1(+) non-empty sqaure, saving which color that is.
@@ -32,17 +18,12 @@
 *** can potentially even expand with additional functions which would rate the capturability of obstructing pieces.
 ** reorganize turn functions?
 ** route functions needed for console runner, etc, through engine?
-** consider lenses for field access
-** consider lenses for field access in state monad during turns
-** moves datatype with dirs
 ** cleanup board initialization, especially startMovesSplit (make clear it's only used on initialization)
 * AI
 ** General
 *** Board evaluation
 **** Black
 ***** cornerGuard
-****** DONE make cornerGuard AI function not depend on lastmove, just look at board
-       CLOSED: [2017-01-11 Wed 19:25]
 ****** TODO enhance cornerGuard function to prefer complete corners.
 ***** TODO discourage protecting adjacent to corners
 ***** TODO prioritize corners just behind king stoppage, perhaps at roughly same level as taking
@@ -57,18 +38,6 @@
 ****** can also be solved by finding piece(s) that would take the piece, and seeing what would happen if they we moved.
 ***** TODO functions to assess changed risk to pieces affected by the last move
 ****** move to avoid or protect against capture necessary to make candidates for recursive move selection
-****** DONE was the piece in danger where it was
-       CLOSED: [2017-01-11 Wed 19:39]
-       tweak this to make sure that when the king is blocked from the corner by a corner adjacent defender
-       and then moves out by just one square, the corner adjacent defender moves out as well to block instead
-       of bringing in a new piece, because otherwise the king will just move back and kill the original defender.
-       in practical terms this will mean scoring moving a (corner adjacent) carefully against king stoppage.
-       On second thought, this might be more easily solved by simply looking ahead one move, either usign MCTS or
-       a more basic manual lookahead of the best moves.
-****** DONE is the piece in danger where it is now
-       CLOSED: [2017-01-11 Wed 19:39]
-       already have a function for this, make sure it is in step so that there isn't a net positive for moving from
-       risk to risk for example
 ****** does the absence of this piece in its previous position put its surrounding pieces at increased risk
        basically check if the closest piece in one direction can threaten any pieces if it were to move to any
        square on the other side or the vacated square.

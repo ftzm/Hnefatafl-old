@@ -23,6 +23,7 @@ import Control.Monad
 import Control.Applicative
 import Control.Arrow
 import qualified Data.IntSet as S
+import Control.Lens hiding (Empty)
 
 dirs :: [Direction]
 dirs = [North,East,South,West]
@@ -88,15 +89,15 @@ escapeCoords = [(0,0),(0,1),(1,0),(10,0),(9,0),(10,1),(0,10),(1,10),(0,9),(10,10
 kingEscapeMoves :: GameState -> Int
 kingEscapeMoves g = sum $ map (\x -> sqr $ 7 - x) $ filter (< 7) moveNums
   where
-    b = board g
-    kingSquare = (king g, King)
+    b = g ^. board
+    kingSquare = (g ^. king, King)
     moveNums = map length $ mapMaybe (findRoute b kingSquare) cornerCoords
 
 enemiesAroundKing :: GameState -> Int
 enemiesAroundKing g = length $ filter (foes s) $ mapMaybe (go b s) dirs
   where
-    b = board g
-    s = getSquare b $ king g
+    b = g ^. board
+    s = getSquare b $ g ^. king
 
 cornerGuards :: [[Coord]]
 cornerGuards =
@@ -109,23 +110,23 @@ cornerGuards =
 rateCorners' :: GameState -> Int
 rateCorners' g = score s2 - score s1
   where
-    (s1,s2) = lastMove g
+    (s1,s2) = g ^. lastMove 
     score = maybe 0 rating . inGuard
-    rating = length . filter (sEq s1) . map (getSquare (board g))
+    rating = length . filter (sEq s1) . map (getSquare (g ^. board))
     inGuard s = find (elem $ fst s) cornerGuards
 
 rateCorners :: GameState -> Int
 rateCorners g = length $ filter ( blackPiece . snd )
               $ map (getSquare b) $ concat cornerGuards
   where
-    b = board g
+    b = g ^. board
 
 -- |How many foes can move to a given empty square in one move?
 -- automatically 10 points if any, plus the number of foes.
 -- Range: 0-13
 foesInRange :: GameState -> (Square -> Bool) -> Square -> Int
 foesInRange g f s = bonus . length $ filter f
-                  $ mapMaybe (findNextPiece (board g) s) dirs
+                  $ mapMaybe (findNextPiece (g ^. board) s) dirs
   where bonus x | x > 0 = 10 + x
                 | otherwise = 0
 
@@ -154,8 +155,8 @@ threatenOther :: GameState -> Int
 threatenOther g = sum $ map (foesInRange g (friends s))
                 $ mapMaybe (vulnBehind b s) dirs
   where
-    b = board g
-    s = snd $ lastMove g
+    b = g ^. board
+    s = snd $ g ^. lastMove
 
 -- |Given a square, see if it is threatened by surrounding squares.
 -- Range: 0 - 39
@@ -168,8 +169,8 @@ arrivalRisk g
               $ mapMaybe (go b s . opp)
               $ filter (maybe False (foes s) . go b s) dirs
   where
-    b = board g
-    s = snd $ lastMove g
+    b = g ^. board
+    s = snd $ g ^. lastMove
 
 departedRisk :: GameState -> Int
 departedRisk g
@@ -180,22 +181,23 @@ departedRisk g
               $ mapMaybe (go b s . opp)
               $ filter (maybe False (foes s) . go b s) dirs
   where
-    b = board g
-    s = fst $ lastMove g
+    b = g ^. board
+    s = snd $ g ^. lastMove
 
 -- |
 --  Range: 0 - 13
 vacateRisk :: GameState -> Int
 vacateRisk g = if any (vulnHere b s) dirs then foesInRange g (foes s) s else 0
-  where b = board g
-        s = fst $ lastMove g
+  where
+    b = g ^. board
+    s = snd $ g ^. lastMove
 
 -- |The ammount of squares available to the king to move to given unlimited
 -- moves. Encourages the AI to close in on the king.
 moveRoom :: GameState -> Int
 moveRoom g = allDestinations b kingSquare
-  where b = board g
-        kingSquare = (king g, King)
+  where b = g ^. board
+        kingSquare = (g ^. king, King)
 
 
 
@@ -203,7 +205,7 @@ moveRoom g = allDestinations b kingSquare
 -- Judge Boards
 
 pickStrategy :: GameState -> (GameState -> Moves -> PostTurn)
-pickStrategy g = if whiteTurn g then whiteStrategy else blackStrategy
+pickStrategy g = if g ^. whiteTurn then whiteStrategy else blackStrategy
 
 whiteStrategy :: GameState -> Moves -> PostTurn
 whiteStrategy g m = bestMove rateWhite (Right m, g)
@@ -219,12 +221,12 @@ type RateAngle = (GameState -> Int, Int -> Int, Int -> Int -> Int)
 
 blackConcerns :: [RateAngle]
 blackConcerns =
-    [ (whiteLosses,       (* 100),    (+))
+    [ (_whiteLosses,       (* 100),    (+))
 --    , (threatenOther,     id,         (+))
 --    , (rateCorners,       (*100),     (+))
 --    , (enemiesAroundKing, (* 20),     (+))
 --    , (departedRisk,      (* 100000), (+))
-    , (blackLosses,       (* 100),    (-))
+    , (_blackLosses,       (* 100),    (-))
 --    , (arrivalRisk,       (* 100000), (-))
 --    , (vacateRisk,        id,         (-))
 --    , (kingEscapeMoves,   (* 1000),   (-))
@@ -233,7 +235,7 @@ blackConcerns =
 
 whiteConcerns :: [RateAngle]
 whiteConcerns =
-    [ (blackLosses,       (* 1000),      (+))
+    [ (_blackLosses,       (* 1000),      (+))
     , (threatenOther,     id,           (+))
     , (kingEscapeMoves,   (* 10000), (+))
     , (moveRoom,          (* 10),       (+))
@@ -242,6 +244,8 @@ whiteConcerns =
     , (vacateRisk,        id,           (-))
     ]
 
+-- | Run through all board assessment methods in a given RateAngle providing a
+-- final rating number
 evalConcerns :: GameState -> [RateAngle] -> Int
 evalConcerns g = foldl' (\acc (c,a,m) -> m acc (a $ c g)) 0
 
@@ -283,7 +287,7 @@ bestMoveRecur r1 r2 x (Right m,g)
 
 generateMove' :: GameState -> Moves -> PostTurn
 generateMove' g m = bestMoveRecur r1 r2 2 (Right m,g)
-  where (r1,r2) = if whiteTurn g then (rateWhite,rateBlack)
+  where (r1,r2) = if g ^. whiteTurn then (rateWhite,rateBlack)
                   else (rateBlack,rateWhite)
 
 recur :: PostTurn -> [PostTurn]

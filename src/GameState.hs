@@ -1,35 +1,24 @@
 {-# LANGUAGE DeriveAnyClass  #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module GameState where
 
-import qualified Data.Map.Strict as M
-
-  --,GameState
-  --  (board
-  --  ,whiteIsHuman
-  --  ,blackIsHuman
-  --  ,whiteTurn
-  --  ,lastMove
-  --  ,whiteLosses
-  --  ,blackLosses
-  --  ,whiteMoves
-  --  ,blackMoves
-  --  )
+import Control.Lens
 
 import Board
-
-type Moves = M.Map Coord (M.Map Direction [Coord])
+import Moves
 
 data GameState = GameState
-    { board :: Board
-    , king :: Coord
-    , whiteIsHuman :: Bool
-    , blackIsHuman :: Bool
-    , whiteTurn :: Bool
-    , lastMove :: (Square,Square)
-    , whiteLosses :: Int
-    , blackLosses :: Int
-    , whiteMoves :: Moves
-    , blackMoves :: Moves
+    { _board :: Board
+    , _king :: Coord
+    , _whiteIsHuman :: Bool
+    , _blackIsHuman :: Bool
+    , _whiteTurn :: Bool
+    , _lastMove :: (Square,Square)
+    , _whiteLosses :: Int
+    , _blackLosses :: Int
+    , _allMoves :: AllMoves
     }
   deriving (Show)
+
+makeLenses ''GameState

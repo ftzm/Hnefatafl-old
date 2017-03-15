@@ -29,6 +29,7 @@ module Board
   ,maybeCoord
   ,whitePiece
   ,blackPiece
+  ,opp
   )
 where
 
@@ -43,6 +44,12 @@ data Piece = White | Black | King | Empty | Corner
 
 data Direction = North | South | East | West
   deriving (Show, Eq, Ord)
+
+opp :: Direction -> Direction
+opp North = South
+opp South = North
+opp East  = West
+opp West  = East
 
 type Coord = (Int, Int)
 type Square = (Coord,Piece)
@@ -139,6 +146,13 @@ go b (c,_) d = getSquare b <$> maybeCoord d c
 
 toEdge :: Square -> Direction -> [Coord]
 toEdge (c,_) d = map fromJust $ takeWhile isJust $ iterate (maybeCoord d =<<) $ maybeCoord d c
+
+toEdge' :: Square -> Direction -> [Coord]
+toEdge' ((x,y),_) d
+  | North <- d = reverse $ init [(x,y') | y' <- [0..y]]
+  | East <- d = tail [(x',y) | x' <- [x..10]]
+  | South <- d = tail [(x,y') | y' <- [y..10]]
+  | West <- d = reverse $ init [(x',y) | x' <- [0..x]]
 
 fromEdge :: Square -> Maybe Direction
 fromEdge ((x,y),_)

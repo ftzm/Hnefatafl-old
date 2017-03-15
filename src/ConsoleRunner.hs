@@ -9,10 +9,12 @@ import BasicAI
 import Turns
 import Engine
 import GameState
+import Moves
 
 import Control.Concurrent
 import Control.Monad.Trans.Maybe
 import qualified Data.Map as M
+import Control.Lens
 
 getYesNo :: IO Bool
 getYesNo = do
@@ -32,12 +34,12 @@ configureGame = do
   if whiteAnswer
      then do
       blackAnswer <- yesNo "Is the black team human?"
-      return $ startGame {blackIsHuman=blackAnswer}
-     else return $ startGame {whiteIsHuman=False, blackIsHuman=True}
+      return $ startGame & blackIsHuman .~ blackAnswer
+     else return $ startGame & whiteIsHuman .~ False & blackIsHuman .~ True
 
 selectMove :: GameState -> Moves -> IO (Coord,Coord)
 selectMove g m = do
-  let b = board g
+  let b = g ^. board
   displayboard b >> pauseUntilKeypress
   piece' <- runMaybeT $ selectByKey (M.keys m) b
   case piece' of
@@ -52,7 +54,7 @@ makeAIMove :: GameState -> Moves -> IO (Either WinLose Moves, GameState)
 --makeAIMove g m = runTurn g <$> (  displayboard (board g)
 --                               >> threadDelay 1000000
  --                              >> selectMove g m)
-makeAIMove g m = displayboard (board g) >> threadDelay 1000000 >> return ( generateMove g m)
+makeAIMove g m = displayboard (g ^. board) >> threadDelay 1000000 >> return ( generateMove g m)
 
 
 gameOverMessage :: WinLose -> IO ()
@@ -69,7 +71,7 @@ gameLoop :: Either WinLose Moves -> GameState
 gameLoop r g = either gameOver makeMove r
   where
     gameOver x = gameOverMessage x >> return (r,g)
-    human = if whiteTurn g then whiteIsHuman g else blackIsHuman g
+    human = if g ^. whiteTurn then g ^. whiteIsHuman else g ^. blackIsHuman
     makeMove x = uncurry gameLoop =<< if human
       then runTurn g <$> selectMove g x
       else makeAIMove g x

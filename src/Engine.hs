@@ -4,21 +4,14 @@ import Board
 import Moves
 import GameState
 
-startMovesWhite :: Moves
-startMovesWhite = allMovesSplit $ startGame {whiteTurn = True}
-
-startMovesBlack :: Moves
-startMovesBlack = allMovesSplit startGame
-
 startGame :: GameState
-startGame = GameState {board = startBoard
-                      ,king = (5,5)
-                      ,whiteIsHuman = True
-                      ,blackIsHuman = True
-                      , whiteTurn = False
-                      ,lastMove = (((5,0),Black),((5,0),Black))
-                      ,whiteLosses = 0
-                      ,blackLosses = 0
-                      ,whiteMoves = startMovesWhite
-                      ,blackMoves = startMovesBlack
+startGame = GameState {_board = startBoard
+                      ,_king = (5,5)
+                      ,_whiteIsHuman = True
+                      ,_blackIsHuman = True
+                      ,_whiteTurn = False
+                      ,_lastMove = (((5,0),Black),((5,0),Black))
+                      ,_whiteLosses = 0
+                      ,_blackLosses = 0
+                      ,_allMoves = startMoves
                       }
