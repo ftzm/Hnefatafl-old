@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
 {-# LANGUAGE TupleSections #-}
 
 module BasicAI
@@ -110,7 +111,7 @@ cornerGuards =
 rateCorners' :: GameState -> Int
 rateCorners' g = score s2 - score s1
   where
-    (s1,s2) = g ^. lastMove 
+    (s1,s2) = g ^. lastMove
     score = maybe 0 rating . inGuard
     rating = length . filter (sEq s1) . map (getSquare (g ^. board))
     inGuard s = find (elem $ fst s) cornerGuards
@@ -222,15 +223,15 @@ type RateAngle = (GameState -> Int, Int -> Int, Int -> Int -> Int)
 blackConcerns :: [RateAngle]
 blackConcerns =
     [ (_whiteLosses,       (* 100),    (+))
---    , (threatenOther,     id,         (+))
---    , (rateCorners,       (*100),     (+))
---    , (enemiesAroundKing, (* 20),     (+))
---    , (departedRisk,      (* 100000), (+))
+    , (threatenOther,     id,         (+))
+    , (rateCorners,       (*100),     (+))
+    , (enemiesAroundKing, (* 20),     (+))
+    , (departedRisk,      (* 100000), (+))
     , (_blackLosses,       (* 100),    (-))
---    , (arrivalRisk,       (* 100000), (-))
---    , (vacateRisk,        id,         (-))
---    , (kingEscapeMoves,   (* 1000),   (-))
---    , (moveRoom,          (* 10),     (-))
+    , (arrivalRisk,       (* 100000), (-))
+    , (vacateRisk,        id,         (-))
+    , (kingEscapeMoves,   (* 100000),   (-))
+    , (moveRoom,          (* 10),     (-))
     ]
 
 whiteConcerns :: [RateAngle]
@@ -286,16 +287,17 @@ bestMoveRecur r1 r2 x (Right m,g)
   $ take 5 $ sortBy (comparing (Down . r1)) $ allGameStates g m
 
 generateMove' :: GameState -> Moves -> PostTurn
-generateMove' g m = bestMoveRecur r1 r2 2 (Right m,g)
+generateMove' g m = bestMoveRecur r1 r2 3 (Right m,g)
   where (r1,r2) = if g ^. whiteTurn then (rateWhite,rateBlack)
                   else (rateBlack,rateWhite)
 
 recur :: PostTurn -> [PostTurn]
-recur p@(Left _ , g) = [p]
+recur p@(Left _ , _) = [p]
 recur (Right m , g) = allGameStates g m
 
 expandGames :: [PostTurn] -> [PostTurn]
 expandGames = concatMap recur
 
-test = sum $ map rateBlack $ take 40000 $ expandGames $ expandGames $ expandGames $ allGameStates startGame startMovesBlack
---test = sum $ map (\x -> 1) $ take 10000 $ expandGames $ expandGames $ expandGames $ allGameStates startGame startMovesBlack
+test :: Integer
+--test = sum $ map rateBlack $ take 400000 $ expandGames $ expandGames $ expandGames $ allGameStates startGame startMovesBlack
+test = sum $ map (const 1) $ expandGames $ expandGames $ expandGames $ allGameStates startGame startMovesBlack

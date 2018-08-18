@@ -104,7 +104,7 @@ allMovesSplit = foldl' buildMap M.empty
     buildMap acc s@(x,_) = M.insert x (pieceMovesSplit startBoard s) acc
 
 startMovesWhite :: Moves
-startMovesWhite = allMovesSplit $ zip whiteStart (repeat White)
+startMovesWhite = allMovesSplit $ zip (throne:whiteStart) (repeat White)
 
 startMovesBlack :: Moves
 startMovesBlack = allMovesSplit $ zip blackStart (repeat Black)

@@ -1,4 +1,3 @@
-{-# LANGUAGE TupleSections #-}
 module ConsoleRunner
   (runGameLoop)
 where
@@ -15,6 +14,12 @@ import Control.Concurrent
 import Control.Monad.Trans.Maybe
 import qualified Data.Map as M
 import Control.Lens
+
+import Options.Applicative
+import Data.Semigroup ((<>))
+
+--threadDelay is so that you get a pause before the opponent makes a move and
+--you can see it
 
 getYesNo :: IO Bool
 getYesNo = do
@@ -76,5 +81,37 @@ gameLoop r g = either gameOver makeMove r
       then runTurn g <$> selectMove g x
       else makeAIMove g x
 
-runGameLoop :: IO (Either WinLose Moves, GameState)
-runGameLoop = gameLoop (Right startMovesBlack) =<< configureGame
+--runGameLoop :: IO ()
+--runGameLoop = void $ gameLoop (Right startMovesBlack) =<< configureGame
+
+runGameLoop :: IO ()
+runGameLoop = print =<< (execParser $ info parseOpts fullDesc)
+
+-------------------------------------------------------------------------------
+-- for CLI
+
+data PlayerType = Human | AI String
+  deriving Show
+
+data GameOptions = GameOptions
+  { blackPlayer :: PlayerType
+  , whitePlayer :: PlayerType
+  , recordGame :: Bool
+  } deriving Show
+
+aiReader :: ReadM PlayerType
+aiReader = AI <$> str
+
+parseOpts :: Parser GameOptions
+parseOpts = GameOptions
+  <$> option aiReader
+      ( long "black"
+     <> value Human
+      )
+  <*> option aiReader
+      ( long "white"
+     <> value Human
+      )
+  <*> switch
+      ( long "record-game"
+      )

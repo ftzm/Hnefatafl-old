@@ -21,7 +21,7 @@ import Board
 
 perp :: Direction -> [Direction]
 perp d | d == North || d == South = [East,West]
-       | d == East  || d == West = [North,South]
+       | otherwise = [North,South]
 
 sEq :: Square -> Square -> Bool
 sEq x y = snd x == snd y
@@ -79,7 +79,7 @@ shieldWall :: Board -> Square -> Maybe [Square]
 shieldWall _ (_,King) = Nothing
 shieldWall b s = liftM2 (>>=) row surrounded =<< fromEdge s
     where
-      row d = ((s:) . concat) <$> mapM (gatherCaps b s) (perp d)
+      row d = (s:) . concat <$> mapM (gatherCaps b s) (perp d)
       surrounded d = mapM (\x -> ifMaybe x (foes x (fromJust $ go b x d)))
 
 captures :: Board -> Square -> Direction -> Maybe [Square]

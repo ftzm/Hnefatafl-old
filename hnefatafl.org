@@ -10,7 +10,7 @@
 ** TODO game end when king occupies corner adacent sqaure. Saves time and cpu.
 ** TODO improve code organization, potentially make even smaller files.
 ** TODO separate board storage method such that one can easily swap out backends.
-** don't directly reference board storage method in 
+** don't directly reference board storage method in
    direct access to neighboard may turn out to be more important than fast lookup as i implement
    remaining engine functions and more ai functions
 ** Make new king path finding function which allows to continue search on encountering 1(+) non-empty sqaure, saving which color that is.
@@ -65,3 +65,66 @@
 ** high branching factor, unable to look very far into the future at the beginning of the game.
 ** non-recursive board judgement: function to assess current state and predict future state. less than a dozen measurement function and the game was not playing like a total idiot, but was still easy to beat.
 ** min-max with pruning and shallow recursion
+
+
+- is moveRoom even a good heuristic? probably better served by escape moves, as most of the time this will just be the king exploring every single square on the board
+  - possible new heuristic: gen all routes for king, but with a cutoff of n moves (maybe 3 or 4). note the final destination, filter only those ending in corner or adjacent. make score based on how few turns out.
+
+- for shield wall: case statement based on position of piece: nsew, outer or one in. From there can throw to a parameterized function to check for a shield wall
+ - for capture: func to get all other directions, map over those with behind-type check
+
+- for moveroom: func to get all contiguous empty squares around king, compare those to total number.
+
+
+for interface:
+- direct access via coord
+
+needed for abstracted board drawing:
+- direct access via coord
+- moves for each piece
+- maybe create a specific datatype which is convenient for drawing
+
+
+- divide heuristics into descriptive (number of pieces, defended corners, moveroom) vs predictive (piece threatened, moves to corner, etc)
+
+- stop running top level gamestate through all game iterations for ai. it should be divded up more. top level gamestate should only be used in describing what _actually_ happens, storing setting and move history etc. get blacklosses and whitelosses out of there.
+
+- make the mechanics rely on the minimum data: gen moves from board only, apply rules (capture, winloss) on board and Move only. That way different heuristics/algos can wrap these minimal things, augmenting or ignoring them as they wish. Don't store moves by default (controversial!)
+
+- different ais in different modules, choose via menu
+
+- record games, in file or db. have way to play games back
+
+- have way to play ai against each other. either one off and watch, or in bulk.
+
+- implement different strategies and keep them all. They can be valuable as representations of a strategy, effectiveness is another judgement.
+  - pure mcts, standard augmented mcts, mcts with depth limit + board judgement, full heuristiced tree traversal looking for best within time limit regardless of depth, pure heuristic with no/minimal lookahead
+
+
+- generic benchmark for each ai, in terms of how long to generate x boards or how many boards generate in x seconds
+
+
+
+
+multiple AI implementations that can be selected as options
+ability for them to play each other
+configurable things can be supplied as args
+configurable setting stored in Reader monad
+
+make board generation and rule super minimal, taking in just the board
+that way AIs can add on things like Moves storage if that's beneficial but skip it if not.
+whiteLosses and blackLosses out of gamestate, gamestate only stores things like movehistory, did we win, etc.
+
+AIs to implement:
+MCTS, MCTS modified, MCTS limited to 10 turns simple heuristic, MinMax, Try pure heuristic for fun
+negamax
+
+divide heuristics into observing and predicting/lookahead
+
+ability to record and play back games
+
+have a standard type that is provided to the board drawer so that the drawer doesn't need to be aware of the internal. Just needs to encode piece positions and moves.
+
+can add back in-game selection as menus in brick once that's a thing.
+
+applyRules :: Board -> Move -> (Board, MoveResult)
