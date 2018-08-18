@@ -66,7 +66,7 @@
 ** non-recursive board judgement: function to assess current state and predict future state. less than a dozen measurement function and the game was not playing like a total idiot, but was still easy to beat.
 ** min-max with pruning and shallow recursion
 
-
+* Notes
 - is moveRoom even a good heuristic? probably better served by escape moves, as most of the time this will just be the king exploring every single square on the board
   - possible new heuristic: gen all routes for king, but with a cutoff of n moves (maybe 3 or 4). note the final destination, filter only those ending in corner or adjacent. make score based on how few turns out.
 
@@ -104,6 +104,7 @@ needed for abstracted board drawing:
 - generic benchmark for each ai, in terms of how long to generate x boards or how many boards generate in x seconds
 
 
+--------when I thought it was gone
 
 
 multiple AI implementations that can be selected as options
