@@ -1,7 +1,7 @@
 {-# LANGUAGE TupleSections #-}
 
 module Capture
-  (findCaptures'
+  (findCaptures
   ,foes
   ,friends
   ,ifMaybe
@@ -85,5 +85,5 @@ shieldWall b s = liftM2 (>>=) row surrounded =<< fromEdge s
 captures :: Board -> Square -> Direction -> Maybe [Square]
 captures b s d = takePawn b d s <|> shieldWall b s <|> takeKing b s
 
-findCaptures' :: Board -> Square -> [Square]
-findCaptures' b s = concat $ mapMaybe (uncurry (captures b)) $ filter (liftM2 (&&) (foes s) ((/=Corner) . snd) . fst) $ around b s
+findCaptures :: Board -> Square -> [Square]
+findCaptures b s = concat $ mapMaybe (uncurry (captures b)) $ filter (liftM2 (&&) (foes s) ((/=Corner) . snd) . fst) $ around b s

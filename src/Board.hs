@@ -122,8 +122,8 @@ putPieceBatch b ss = b V.// map convert ss
 deletePiece :: Square -> Board -> Board
 deletePiece (c,_) = putPiece c Empty
 
-deletePieceBatch :: [Square] -> Board -> Board
-deletePieceBatch ss b = putPieceBatch b $ zip (map fst ss) (repeat Empty)
+deletePieceBatch :: Board -> [Square]  -> Board
+deletePieceBatch b ss = putPieceBatch b $ zip (map fst ss) (repeat Empty)
 
 getSquare :: Board -> Coord -> (Coord,Piece)
 getSquare b i = (i,getPiece b i)

@@ -129,3 +129,9 @@ have a standard type that is provided to the board drawer so that the drawer doe
 can add back in-game selection as menus in brick once that's a thing.
 
 applyRules :: Board -> Move -> (Board, MoveResult)
+
+make board part of traverisble or whatever lets me map over it
+
+record of rule handling functions that can be configured by AIs
+
+Perhaps makes sense to divide rules into basic rules and meta rules, that is to say, rules about capturing or escaping on the one hand, and on the availability or eligibility of further rules on the other. So we could process a move which has been deemed eligible at one stage, and then at another stage we can check if there exist any moves, or any pieces, or if
