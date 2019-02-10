@@ -129,3 +129,40 @@ have a standard type that is provided to the board drawer so that the drawer doe
 can add back in-game selection as menus in brick once that's a thing.
 
 applyRules :: Board -> Move -> (Board, MoveResult)
+
+* Data Type Pro Cons
+** Board
+*** When it's accessed
+- drawing board
+- deleting and putting a piece on move and capture
+- looking up adjacent pieces when calulating captures
+- in lines across the board when calculating potential movement paths or assigning moves to a piece
+- want to run across all white/black
+- king directly accessed
+*** Interface to expose
+- lookup by coord
+- insert delete (plus batch)
+- given square and dir, list of all empty spaces in that direction plus maybe the square stopping it.
+** MoveStore
+*** storage
+- by dir, needed for update function and ui
+*** When it's accessed
+- when displaying move options
+- when generating all possible boards in AI
+- when checking if there are any moves (or any pieces if faster)
+*** How it's accessed
+- usually by color. There's essentially never a time we want to move all at once.
+- usually iterating over all of one color. Only want lookup by piece for UI, maybe for some weird AI feature. Usually it's for generating all moves.
+*** To store or regenerate?
+- there's a change that all of the memory and processing involved in maintaining state
+- create board that "stores" the moves inside of it. Have one func that maintains state and one that regenerates every time. benchmark.
+** Combining Board and MoveStore
+** Separate phase for no piece/moves/repetition
+*** Pro
+- Don't have to calculate moves at the end of the turn, could nice for algorithms that don't care about future moves
+- Can keep the move processing code simpler by only handling the board
+*** Con
+- Board and moves are handled at different times, there will be an interval where they are out of sync
+- Have to check for win/loss at two different points
+- there's something odd about starting your turn and then suddenly bam you lose, would be extra weird in online/network context
+- in the case that we throw the board to some outside AI or something to process, it needs to be that thing's responsibility to figure out if it can even move, and potentially return some message saying "I lost" rather than it only ever getting the board and returning a move.

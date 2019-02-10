@@ -29,6 +29,7 @@ library
                      , containers
                      , transformers
                      , vector
+                     , vector-th-unbox
                      , unix
                      , mtl
                      , ansi-terminal
