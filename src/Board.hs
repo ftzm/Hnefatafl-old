@@ -32,6 +32,7 @@ module Board
   ,whitePiece
   ,blackPiece
   ,opp
+  ,exportBoard
   )
 
 where
@@ -193,3 +194,13 @@ whitePiece _ = False
 blackPiece :: Piece -> Bool
 blackPiece Black = True
 blackPiece _ = False
+
+exportBoard :: Board -> [Char]
+exportBoard = V.toList . V.map pieceChar
+  where
+    pieceChar p = case p of
+      White  -> 'o'
+      Black  -> 'x'
+      King   -> 'K'
+      Empty  -> ' '
+      Corner -> 'c'

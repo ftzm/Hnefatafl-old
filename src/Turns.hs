@@ -210,7 +210,7 @@ nextMoves' t = t & nextSideMoves .~ if wt then wms else bms
 
 helplessCheck' :: TurnState -> TurnState
 helplessCheck' t = t & winLose .~ if empty
-                                 then if isJust $ V.find (==0) b
+                                 then if isJust $ V.find (==Black) b
                                       then Just NoMoves
                                       else Just NoPieces
                                  else wl
