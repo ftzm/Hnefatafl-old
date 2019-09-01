@@ -1,6 +1,5 @@
 module Main where
 
-import ConsoleRunner
+import Dispatch
 
-main = runGameLoop
---main = print test
+main = dispatch
