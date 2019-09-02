@@ -95,6 +95,3 @@ gameLoop r g = either gameOver makeMove r
   human = if g ^. whiteTurn then g ^. whiteIsHuman else g ^. blackIsHuman
   makeMove x = uncurry gameLoop
     =<< if human then runTurn g <$> selectMove g x else makeAIMove g x
-
--------------------------------------------------------------------------------
--- for CLI

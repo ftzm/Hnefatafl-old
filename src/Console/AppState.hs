@@ -5,15 +5,20 @@ module Console.AppState
   , Tick (..)
   , Phase (..)
   , AppState (..)
-  , gameState
-  , startState
   , GameOptions (..)
   , PlayerType (..)
+  , gameState
+  , phase
+  , startState
   ) where
 
 import           GameState (GameState)
+import           Moves (SimpleMoves, startMovesBlack, exportMoves)
+import           Board (Coord, Direction)
 import           Engine (startGame)
+
 import           Control.Lens (makeLenses)
+import qualified Data.Map.Strict as M
 
 -------------------------------------------------------------------------------
 
@@ -23,7 +28,8 @@ data Tick = Tick
 
 data Phase
   = View
-  | ChooseMove
+  | ChoosePiece SimpleMoves
+  | ChooseMove [Coord]
   | Wait
   | End
   deriving (Show)
@@ -36,7 +42,7 @@ data AppState = AppState
 makeLenses ''AppState
 
 startState :: AppState
-startState = AppState startGame Wait
+startState = AppState startGame $ ChoosePiece $ exportMoves startMovesBlack
 
 -------------------------------------------------------------------------------
 -- Options

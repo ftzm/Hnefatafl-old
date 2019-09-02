@@ -27,7 +27,7 @@ piecesToString m = map (symbol . getPiece m) $ map intToXY [0..120]
     symbol Empty  = ' '
     symbol Corner = '+'
 
-boardStringKeys :: [Coord] -> String -> String
+boardStringKeys :: [Coord] -> String -> [Char]
 boardStringKeys ks b = V.toList $ V.fromList b V.// zip (map xyToInt ks) ['a'..'z']
 
 alphaToIndex :: Char -> [Coord] -> Maybe Int

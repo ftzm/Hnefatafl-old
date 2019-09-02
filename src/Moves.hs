@@ -10,9 +10,11 @@ module Moves
   ,startMovesBlack
   ,startMoves
   ,Moves
+  ,SimpleMoves
   ,AllMoves
   ,blackMoves
   ,whiteMoves
+  ,exportMoves
   )
 where
 
@@ -22,6 +24,7 @@ import           Data.List
 import qualified Data.Map.Strict as M
 
 type Moves = M.Map Coord (M.Map Direction [Coord])
+type SimpleMoves = M.Map Coord [Coord]
 
 data AllMoves = AllMoves
   { _whiteMoves :: Moves
@@ -111,3 +114,6 @@ startMovesBlack = allMovesSplit $ zip blackStart (repeat Black)
 
 startMoves :: AllMoves
 startMoves = AllMoves { _whiteMoves = startMovesWhite , _blackMoves = startMovesBlack }
+
+exportMoves :: Moves -> SimpleMoves
+exportMoves = M.filter (not . null) . M.map (concat . M.elems)
