@@ -29,7 +29,7 @@ data Tick = Tick
 data Phase
   = View
   | ChoosePiece SimpleMoves
-  | ChooseMove [Coord]
+  | ChooseMove Coord [Coord]
   | Wait
   | End
   deriving (Show)

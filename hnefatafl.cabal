@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 09f009f12aaedacc6c46a7d7b0fba00addf42a9ea469949678e877087ba4562d
+-- hash: 9b407ed64b0e9d9140aa8cebda6f51cd91f587dc232b826ebfeaa77006031747
 
 name:           hnefatafl
 version:        0.0.0.1
@@ -33,6 +33,7 @@ library
       Console.AppState
       Console.Draw
       Console.Events
+      Console.MovesAdapter
       Console.Runner
       ConsoleRunner
       Dispatch
