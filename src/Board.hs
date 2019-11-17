@@ -19,6 +19,7 @@ module Board
   ,intToXY
   ,startBoard
   ,toEdge
+  ,toEdge'
   ,fromEdge
   ,go
   ,throne

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9b407ed64b0e9d9140aa8cebda6f51cd91f587dc232b826ebfeaa77006031747
+-- hash: aa6604d8655a3fa19a2740e0690191dd0ae980492007e99b8b64e8d7a60c9b62
 
 name:           hnefatafl
 version:        0.0.0.1
@@ -31,12 +31,12 @@ library
       Board
       Capture
       Console.AppState
+      Console.Dispatch
       Console.Draw
       Console.Events
       Console.MovesAdapter
       Console.Runner
       ConsoleRunner
-      Dispatch
       Engine
       GameState
       Moves
@@ -46,6 +46,7 @@ library
       Paths_hnefatafl
   hs-source-dirs:
       src
+  ghc-options: -Werror
   build-depends:
       aeson
     , aeson-pretty

@@ -111,7 +111,6 @@ postMoveUpdateMoves' :: TurnState -> TurnState
 postMoveUpdateMoves' t = t & gameState . allMoves %~ (postMoveUpdate lt b)
   where
     lt = t ^. gameState . lastMove
-    m = t ^. gameState . allMoves
     b = t ^. gameState . board
 
 

@@ -1,4 +1,4 @@
-module Dispatch (dispatch) where
+module Console.Dispatch (dispatch) where
 
 import           Console.Runner (runGame)
 import           Console.AppState (PlayerType(..), GameOptions(..))

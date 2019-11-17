@@ -1,5 +1,5 @@
 module Main where
 
-import Dispatch
+import Console.Dispatch
 
 main = dispatch

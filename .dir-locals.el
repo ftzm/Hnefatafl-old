@@ -1,1 +1,1 @@
-((nil . ((dante-methods . (nix-ghci)))))
+((nil . ((dante-methods . (bare-cabal)))))

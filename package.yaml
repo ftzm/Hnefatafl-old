@@ -40,6 +40,9 @@ dependencies:
 
 library:
   source-dirs: src
+  ghc-options:
+  # - -W
+  - -Werror
 
 executables:
   hnefatafl:

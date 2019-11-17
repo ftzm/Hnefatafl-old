@@ -14,11 +14,10 @@ module Console.AppState
 
 import           GameState (GameState)
 import           Moves (SimpleMoves, startMovesBlack, exportMoves)
-import           Board (Coord, Direction)
+import           Board (Coord)
 import           Engine (startGame)
 
 import           Control.Lens (makeLenses)
-import qualified Data.Map.Strict as M
 
 -------------------------------------------------------------------------------
 
@@ -30,6 +29,7 @@ data Phase
   = View
   | ChoosePiece SimpleMoves
   | ChooseMove Coord [Coord]
+  | GameOver String
   | Wait
   | End
   deriving (Show)

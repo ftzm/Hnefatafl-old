@@ -5,7 +5,6 @@ module Console.Draw
 
 import Console.AppState
 import GameState
-import Board (Coord)
 import Console.MovesAdapter (Tile(..), labelBoardMoves, labelBoardPieces)
 
 import Brick
@@ -68,3 +67,4 @@ drawUI :: AppState -> [Widget Name]
 drawUI a = case a ^. phase of
   ChoosePiece m -> [a ^. gameState . board & (labelBoardPieces m) & drawBoard]
   ChooseMove _ m -> [a ^. gameState . board & (labelBoardMoves m) & drawBoard]
+  _ -> [str "Nothing to see here..."]

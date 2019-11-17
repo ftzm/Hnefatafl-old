@@ -6,7 +6,6 @@ module PrintBoard
   ) where
 
 import Board
-import qualified Data.IntSet as S
 
 import System.IO
 import System.Console.ANSI (clearScreen)
