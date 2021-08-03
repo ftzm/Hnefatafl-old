@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: aa6604d8655a3fa19a2740e0690191dd0ae980492007e99b8b64e8d7a60c9b62
+-- hash: 22acabb0d4bc3bbfa7e04822430cd34cdf6e6be6b21bc76e3ca78c3ef2a40f40
 
 name:           hnefatafl
 version:        0.0.0.1
@@ -29,6 +29,7 @@ library
   exposed-modules:
       BasicAI
       Board
+      Capability
       Capture
       Console.AppState
       Console.Dispatch

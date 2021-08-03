@@ -5,7 +5,7 @@ module Console.Draw
 
 import Console.AppState
 import GameState
-import Console.MovesAdapter (Tile(..), labelBoardMoves, labelBoardPieces)
+import Console.MovesAdapter (Tile(..), labelBoardMoves, labelBoardPieces, viewBoard)
 
 import Brick
   ( Widget
@@ -15,6 +15,9 @@ import Brick
   , AttrMap
   , attrMap
   , str
+  , fill
+  , (<=>)
+  , (<+>)
   )
 import Brick.Widgets.Core
   ( vLimit
@@ -26,6 +29,8 @@ import Brick.Widgets.Border
   , vBorder
   , hBorder
   , borderAttr
+  , borderWithLabel
+  , hBorderWithLabel
   )
 import Brick.Util (fg)
 import Control.Lens ((&), (^.))
@@ -64,7 +69,14 @@ attributes =
     ]
 
 drawUI :: AppState -> [Widget Name]
-drawUI a = case a ^. phase of
-  ChoosePiece m -> [a ^. gameState . board & (labelBoardPieces m) & drawBoard]
-  ChooseMove _ m -> [a ^. gameState . board & (labelBoardMoves m) & drawBoard]
-  _ -> [str "Nothing to see here..."]
+drawUI a = [boardWidget a <=> logWidget a]
+
+logWidget :: AppState -> Widget Name
+logWidget a = (hBorderWithLabel $ str "Logs") <=> (vBox $ map str $ _logMessages a)
+
+boardWidget :: AppState -> Widget Name
+boardWidget a = case a ^. phase of
+  ChoosePiece m -> a ^. gameState . board & (labelBoardPieces m) & drawBoard
+  ChooseMove _ m -> a ^. gameState . board & (labelBoardMoves m) & drawBoard
+  View m -> a ^. gameState . board & viewBoard & drawBoard
+  _ -> str "Nothing to see here..."

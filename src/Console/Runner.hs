@@ -14,7 +14,7 @@ import           Graphics.Vty (mkVty, defaultConfig)
 
 -------------------------------------------------------------------------------
 
-app :: App AppState Tick Name
+app :: App AppState AsyncEvent Name
 app = App { appDraw = drawUI
           , appChooseCursor = neverShowCursor
           , appHandleEvent = handleEvent
@@ -22,11 +22,11 @@ app = App { appDraw = drawUI
           , appAttrMap = const attributes
           }
 
-runTick :: BChan Tick -> IO ThreadId
+runTick :: BChan AsyncEvent -> IO ThreadId
 runTick chan =
   forkIO $ forever $ do
     writeBChan chan Tick
-    threadDelay 100000 -- decides how frequently the Tick is sent
+    threadDelay 1000000 -- decides how frequently the Tick is sent
 
 runGame :: GameOptions -> IO ()
 runGame o = do
@@ -34,4 +34,4 @@ runGame o = do
   runTick chan
   let buildVty = mkVty defaultConfig
   initialVty <- buildVty
-  void $ customMain initialVty buildVty (Just chan) app startState
+  void $ customMain initialVty buildVty (Just chan) app $ startState chan

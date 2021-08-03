@@ -232,8 +232,7 @@ helplessCheck' t = t & winLose .~ if empty
 --                >>= helplessCheck
 
 runTurn :: GameState -> (Coord, Coord) -> PostTurn
-runTurn g mv = pack $ foldl' (\acc f -> f acc)
-               newTurnState actions
+runTurn g mv = pack $ foldl' (\acc f -> f acc) newTurnState actions
   where
     newTurnState = TurnState
       { _gameState=g

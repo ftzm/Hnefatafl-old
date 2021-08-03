@@ -10,6 +10,7 @@ module Console.MovesAdapter
   , charToPieceMove
   , labelBoardPieces
   , labelBoardMoves
+  , viewBoard
   ) where
 
 import           Prelude hiding (lookup)
@@ -38,6 +39,9 @@ labelledBoard ms = map mkTile . zip [0..]
   where
     labelMap = fromList $ zip (map xyToInt ms) ['a'..]
     mkTile (i, c) = maybe (Symbol c) Label (lookup i labelMap)
+
+viewBoard :: Board -> [Tile]
+viewBoard b = (map Symbol (exportBoard b))
 
 labelBoardPieces :: SimpleMoves -> Board -> [Tile]
 labelBoardPieces m b = labelledBoard (keys m) (exportBoard b)

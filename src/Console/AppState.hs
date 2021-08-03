@@ -2,13 +2,14 @@
 
 module Console.AppState
   ( Name
-  , Tick (..)
+  , AsyncEvent (..)
   , Phase (..)
   , AppState (..)
   , GameOptions (..)
   , PlayerType (..)
   , gameState
   , phase
+  , logMessages
   , startState
   ) where
 
@@ -16,6 +17,7 @@ import           GameState (GameState)
 import           Moves (SimpleMoves, startMovesBlack, exportMoves)
 import           Board (Coord)
 import           Engine (startGame)
+import           Brick.BChan (BChan)
 
 import           Control.Lens (makeLenses)
 
@@ -23,10 +25,12 @@ import           Control.Lens (makeLenses)
 
 type Name = ()
 
-data Tick = Tick
+data AsyncEvent
+  = Tick
+  | Log String
 
 data Phase
-  = View
+  = View SimpleMoves
   | ChoosePiece SimpleMoves
   | ChooseMove Coord [Coord]
   | GameOver String
@@ -37,12 +41,13 @@ data Phase
 data AppState = AppState
   { _gameState :: GameState
   , _phase :: Phase
+  , _logMessages :: [String]
+  , _chan :: BChan AsyncEvent
   }
-  deriving (Show)
 makeLenses ''AppState
 
-startState :: AppState
-startState = AppState startGame $ ChoosePiece $ exportMoves startMovesBlack
+startState :: BChan AsyncEvent -> AppState
+startState = AppState startGame (ChoosePiece $ exportMoves startMovesBlack) ["The game is afoot!"]
 
 -------------------------------------------------------------------------------
 -- Options

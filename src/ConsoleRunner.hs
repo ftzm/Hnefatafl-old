@@ -70,7 +70,7 @@ selectMove g m = do
         Nothing   -> selectMove g m
         Just move -> return (piece, move)
 
-makeAIMove :: GameState -> Moves -> IO (Either WinLose Moves, GameState)
+makeAIMove :: GameState -> Moves -> IO PostTurn
 --makeAIMove g m = runTurn g <$> (  displayboard (board g)
 --                               >> threadDelay 1000000
  --                              >> selectMove g m)
