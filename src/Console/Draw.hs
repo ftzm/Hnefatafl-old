@@ -69,7 +69,34 @@ attributes =
     ]
 
 drawUI :: AppState -> [Widget Name]
-drawUI a = [boardWidget a <=> logWidget a]
+drawUI a = [(boardWidget a <+> playersWidget a) <=> logWidget a]
+
+playersWidget :: AppState -> Widget Name
+playersWidget a = blackPlayerWidget a <=> whitePlayerWidget a
+
+playerWidget
+  :: (AppState -> Bool)
+  -> String
+  -> (AppState -> PlayerType)
+  -> AppState
+  -> Widget Name
+playerWidget turnFunc playerLabel playerFunc a =
+  hBox
+  [ currentSymbol
+  , str $ playerLabel ++ ": " ++ (playerFunc a & show)
+  , str status
+  ]
+  where
+    currentSymbol = str $ case turnFunc a of
+      True -> " > "
+      False -> "   "
+    status = if not (turnFunc a) then "" else " - " ++ a ^. selectionStatus
+
+whitePlayerWidget :: AppState -> Widget Name
+whitePlayerWidget a = playerWidget (\a -> a ^. gameState . whiteTurn) "White" (\a -> a ^. gameOptions . whitePlayer) a
+
+blackPlayerWidget :: AppState -> Widget Name
+blackPlayerWidget a = playerWidget (\a -> a ^. gameState . whiteTurn & not) "Black" (\a -> a ^. gameOptions . blackPlayer) a
 
 logWidget :: AppState -> Widget Name
 logWidget a = (hBorderWithLabel $ str "Logs") <=> (vBox $ map str $ _logMessages a)

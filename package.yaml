@@ -36,6 +36,7 @@ dependencies:
 - optparse-applicative
 - brick
 - vty
+- async
 
 
 library:

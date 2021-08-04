@@ -47,14 +47,14 @@ getYesNo = do
 yesNo :: String -> IO Bool
 yesNo s = putStrLn (s ++ " (y/n): ") >> getYesNo
 
-configureGame :: IO GameState
-configureGame = do
-  whiteAnswer <- yesNo "Is the white team human?"
-  if whiteAnswer
-    then do
-      blackAnswer <- yesNo "Is the black team human?"
-      return $ startGame & blackIsHuman .~ blackAnswer
-    else return $ startGame & whiteIsHuman .~ False & blackIsHuman .~ True
+--configureGame :: IO GameState
+--configureGame = do
+--  whiteAnswer <- yesNo "Is the white team human?"
+--  if whiteAnswer
+--    then do
+--      blackAnswer <- yesNo "Is the black team human?"
+--      return $ startGame & blackIsHuman .~ blackAnswer
+--    else return $ startGame & whiteIsHuman .~ False & blackIsHuman .~ True
 
 selectMove :: GameState -> Moves -> IO (Coord, Coord)
 selectMove g m = do
@@ -87,11 +87,11 @@ gameOverMessage = putStrLn . message
     NoMoves     -> "Black has no moves!"
     NoPieces    -> "Black has no pieces!"
 
-gameLoop
-  :: Either WinLose Moves -> GameState -> IO (Either WinLose Moves, GameState)
-gameLoop r g = either gameOver makeMove r
- where
-  gameOver x = gameOverMessage x >> return (r, g)
-  human = if g ^. whiteTurn then g ^. whiteIsHuman else g ^. blackIsHuman
-  makeMove x = uncurry gameLoop
-    =<< if human then runTurn g <$> selectMove g x else makeAIMove g x
+--gameLoop
+--  :: Either WinLose Moves -> GameState -> IO (Either WinLose Moves, GameState)
+--gameLoop r g = either gameOver makeMove r
+-- where
+--  gameOver x = gameOverMessage x >> return (r, g)
+--  human = if g ^. whiteTurn then g ^. whiteIsHuman else g ^. blackIsHuman
+--  makeMove x = uncurry gameLoop
+--    =<< if human then runTurn g <$> selectMove g x else makeAIMove g x

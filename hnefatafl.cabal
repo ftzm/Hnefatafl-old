@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 22acabb0d4bc3bbfa7e04822430cd34cdf6e6be6b21bc76e3ca78c3ef2a40f40
+-- hash: 16a221fbb07edf960912af725e2631f465919f7a9332b3014172777ed8f25210
 
 name:           hnefatafl
 version:        0.0.0.1
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      AI.Dispatch
       BasicAI
       Board
       Capability
@@ -52,6 +53,7 @@ library
       aeson
     , aeson-pretty
     , ansi-terminal
+    , async
     , base >=4.7 && <5
     , brick
     , bytestring
@@ -78,6 +80,7 @@ executable hnefatafl
       aeson
     , aeson-pretty
     , ansi-terminal
+    , async
     , base >=4.7 && <5
     , brick
     , bytestring

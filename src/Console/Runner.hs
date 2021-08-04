@@ -8,9 +8,9 @@ import           Console.Events
 
 import           Brick
 import           Brick.BChan (newBChan, writeBChan, BChan)
-import           Control.Concurrent (ThreadId, forkIO, threadDelay)
 import           Control.Monad (forever, void)
 import           Graphics.Vty (mkVty, defaultConfig)
+--import           Control.Concurrent (ThreadId, forkIO, threadDelay)
 
 -------------------------------------------------------------------------------
 
@@ -22,16 +22,16 @@ app = App { appDraw = drawUI
           , appAttrMap = const attributes
           }
 
-runTick :: BChan AsyncEvent -> IO ThreadId
-runTick chan =
-  forkIO $ forever $ do
-    writeBChan chan Tick
-    threadDelay 1000000 -- decides how frequently the Tick is sent
+--runTick :: BChan AsyncEvent -> IO ThreadId
+--runTick chan =
+--  forkIO $ forever $ do
+--    writeBChan chan Tick
+--    threadDelay 1000000 -- decides how frequently the Tick is sent
 
 runGame :: GameOptions -> IO ()
 runGame o = do
   chan <- newBChan 10
-  runTick chan
+ -- runTick chan
   let buildVty = mkVty defaultConfig
   initialVty <- buildVty
-  void $ customMain initialVty buildVty (Just chan) app $ startState chan
+  void $ customMain initialVty buildVty (Just chan) app $ startState o chan

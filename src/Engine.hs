@@ -7,8 +7,6 @@ import GameState
 startGame :: GameState
 startGame = GameState {_board = startBoard
                       ,_king = (5,5)
-                      ,_whiteIsHuman = True
-                      ,_blackIsHuman = True
                       ,_whiteTurn = False
                       ,_lastMove = (((5,0),Black),((5,0),Black))
                       ,_whiteLosses = 0

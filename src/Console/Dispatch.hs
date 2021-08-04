@@ -1,22 +1,28 @@
 module Console.Dispatch (dispatch) where
 
+import           Data.List
+
 import           Console.Runner (runGame)
 import           Console.AppState (PlayerType(..), GameOptions(..))
 import           Options.Applicative
+import           AI.Dispatch
 
 data Command
   = Play GameOptions
   | Benchmark
 
 aiReader :: ReadM PlayerType
-aiReader = AI <$> str
+aiReader = AI <$> auto
 
 gameOpts :: Parser GameOptions
 gameOpts =
   GameOptions
-    <$> option aiReader (long "black" <> value Human)
-    <*> option aiReader (long "white" <> value Human)
+    <$> option aiReader (long "black" <> value Human <> aiHelp)
+    <*> option aiReader (long "white" <> value Human <> aiHelp)
     <*> switch (long "record-game")
+  where
+    aiHelp = help
+      ("Specify Mode. Accepts: " ++ (intercalate ", " $ map show allAITypes))
 
 parseCommand :: Parser Command
 parseCommand =
